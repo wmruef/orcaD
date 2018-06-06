@@ -1,0 +1,11 @@
+[Unit]
+Description=auxiliaryD Auxiliary Sensor Daemon
+
+[Service]
+ExecStart=/usr/local/orcaD/auxiliaryd -f
+Restart=always
+StandardOutput=null
+
+[Install]
+WantedBy=muti-user.target
+Alias=auxiliaryd.service

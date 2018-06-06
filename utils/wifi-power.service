@@ -1,0 +1,11 @@
+[Unit]
+Description=WIFI Power On-Boot Service 
+
+[Service]
+ExecStart=/sbin/iotest WIFI ON 
+Restart=no
+StandardOutput=null
+
+[Install]
+WantedBy=muti-user.target
+Alias=wifi-power.service

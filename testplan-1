@@ -1,0 +1,507 @@
+
+orcaD Test Plan
+===============
+
+
+Initial Preparations:
+
+  - Read the orcaD config and verify correct settings
+    for testing.  In particular verify the min, max
+    and parking depths ( the test as written assumes
+    the default of 2, 20, 100 but this could be changed ).
+    Verify serial hardware is configured correctly. 
+    Check that the mission schedules are not set to
+    run anywhere near the start of the test.
+
+  - Attach the laptop to the hydrowire and verify
+    communications to the package.
+
+  - Attach bitsyX to the hydrowire and verify communications
+    using the aliases to picocomm: ctd19plus_talk and ctd19_talk
+
+    Currently the 19+ is set for 9600 baud. It will be
+    interesting to see how well you can communicate with it
+    over the hydrowire length.
+
+  - Remove any old logs which may be left from running
+    the programs before the test:
+
+       % cd /usr/local/orcaD/logs
+       % rm orcad orcactrl
+       % cd ../data/
+       % pwd
+       /usr/local/orcaD/data
+    Make sure you are in the correct directory and run:
+       % rm -rf * 
+     
+
+TEST #1 -- Basic communications and control
+
+ - Attach bitsyX to the batteries, meterwheel and winch.
+
+  1. Boot the computer and attempt to run orcactrl:
+        % cd /usr/local/orcaD
+        % ./orcactrl 
+
+        orcactrl>
+
+  2. Verify config is the same as is on disk:
+
+        orcactrl> view config
+
+  3. Attempt to obtain battery voltage: 
+
+        orcactrl> view voltage
+
+              Record Starting Voltags:
+
+                        Internal: __________
+
+                        External: __________      
+
+       If something goes wrong exit orcactrl
+       and rerun with debuging turned on:
+
+         % ./orcactrl -d 8
+
+  4. Attempt to monitor voltage: 
+
+        orcactrl> monitor voltage
+
+     press 'x' once satisfied the voltages are stable.
+
+     If something goes wrong exit orcactrl
+     and rerun with debuging turned on:
+
+         % ./orcactrl -d 8
+ 
+  5. Attempt to obtain meter count: 
+
+        orcactrl> view meterwheel
+
+              Record Starting Count: ________
+
+  6. Attempt to monitor meter count: 
+        
+        orcactrl> monitor meterwheel 
+
+     press 'x' once satisfied the count is stable.
+
+  7. quit out of ocractrl
+
+        orcactrl> quit
+        Bye Bye
+        %
+
+  8. Attempt to turn on the winch. Have someone standby
+     the manual/automatic switch in case something goes
+     wrong.  
+
+        % ./iotest WINCHDIR DOWN
+        
+     Now enter the command to turn the winch off ( so
+     that you can quickly use the up-arrow to retrieve
+     it after turning the winch on ).
+
+        % ./iotest WINCHPWR OFF
+       
+     Ok...now turn it on: 
+        
+        % ./iotest WINCHPWR ON
+
+     Use the up arrow to retrieve the OFF command
+     and run it.  Note any strange behaviour
+     in the above operations:
+
+
+
+ 9. Move the winch back up:
+
+       % ./iotest WINCHDIR UP
+       % ./iotest WINCHPWR OFF
+       % ./iotest WINCHPWR ON
+
+    Again note any strange behaviour:
+
+                 
+ 
+
+TEST #2 -- Advanced winch control
+
+  - Attach CTD package and hydro wire connections
+  - Attach premeasured rope to package
+  - NOTE: That the messages being logged to the
+          screen are also saved to the log file
+          stored in /usr/local/orcaD/logs/orcactrl.
+
+  1. Attempt to communicate with the CTD:
+
+        %  ctd19plus_talk
+
+
+     Enter ctrl-A ctrl-X to exit.
+
+  2. Manually lower the package to a depth of 2 
+     meters ( measured by rope from surface of water
+     to the pressure guage on the CTD ).
+
+  3. Run orcactrl:
+
+       % cd /usr/local/orcaD
+
+     This time with verbose logging:
+       % ./orcactrl -d 8
+       
+       orcactrl> 
+
+  4. Attempt to view pressure: 
+
+       orcactrl> view pressure
+      
+            Record this pressure as a baseline: ________
+
+  5. Attempt to monitor pressure: 
+
+       orcactrl> monitor pressure
+
+     press 'x' once satisfied the count is stable.
+
+  6. Place winch in automatic mode.  Place
+     someone on the switch so that it can
+     be switched back to manual should anything
+     go wrong with the test.  The switch should
+     be thrown if the package breaches the 
+     the surface.
+
+  7. Move package down to 15 meters with software: 
+
+       orcactrl> move down 15
+
+     This will print out lots of execution details
+     mostly for the benefit of the log so that later
+     I can take a look and decypher any problems.
+     
+     If something goes wrong the key thing to look
+     at is the final "Status =" lines.  These
+     tell you the status codes (see table at end
+     of test plan) and 4 most recent pressures/meter
+     counts.  Note any problems with this operation
+     here:       
+
+
+     If this operation doesn't work at all then
+     the rest of the tesplan cannot be executed.
+
+  8. Verify depth: 
+
+       orcactrl> view pressure
+            Record Pressure: ___________
+
+       orcactrl> view meterwheel 
+            Record Meterwheel: _________ 
+
+            Record Rope Depth: _________
+
+  9. Move package up to 5 meters: 
+       
+       orcactrl> move up 5
+
+       Note any strange behaviour:
+
+
+
+ 10. Verify depth: 
+ 
+       orcactrl> view pressure
+            Record Pressure: ___________
+
+       orcactrl> view meterwheel 
+            Record Meterwheel: _________ 
+
+            Record Rope Depth: _________
+
+ 11. Move package up to 2 meters:
+      
+        orcactrl> move up 2
+
+     Mark hydrowire with colored tape at
+     or below the meterwheel to indicate
+     that the package is at the minimum
+     depth.  This will help with future
+     monitoring of the buoy.
+
+ 12. Manually raise the package and detach the rope.
+
+ 13. Move package down to max depth:
+
+        orcactrl>  move down 100
+
+     Mark cable as above.
+
+ 14. Verify depth: 
+  
+       orcactrl> view pressure
+            Record Pressure: ___________
+
+       orcactrl> view meterwheel 
+            Record Meterwheel: _________ 
+
+ 15. Move package up to parking depth:
+   
+       orcactrl> move up 20
+
+     Mark cable as above.
+
+ 16. Verify depth: 
+   
+       orcactrl> view pressure
+            Record Pressure: ___________
+
+       orcactrl> view meterwheel 
+            Record Meterwheel: _________ 
+
+
+
+
+TEST #3 -- Direct Profiles
+
+  - Same configuration
+
+  1. Manually run a profile using orcactrl.  This
+     first profile will be a shallow cast without
+     discrete sampling.  The package should be at
+     parking depth ( 20 meters ) after the last
+     test.  The minimum depth should be 2 meters
+     and the cycles should be 0.5 ( shallow ).
+     View the config file and verify these 
+     parameters first:
+
+       orcactrl> view config
+       ...
+       orcactrl> profile shallow_cast_direct
+
+     You should observe the following behaviour:
+
+          __ Waits 2 minutes for 02 sensor to warm up.
+          __ Package moves UP continuously to 2 meters.
+          __ Waits 20 seconds for sensor equilibration.
+          __ Package moves DOWN continuously to 20 meters.
+
+  2. Verify parking depth: 
+
+       orcactrl> view pressure
+            Record Pressure: ___________
+
+  3. Manually run a deep cast profile.  Again this will
+     be a direct profile without any discrete stops.
+
+       orcactrl> profile deep_cast_direct
+
+     You should observe the following behaviour:
+
+          __ Waits 2 minutes for O2 sensor to warm up.
+          __ Package moves UP continuously to 2 meters.
+          __ Waits 20 seconds for sensor equilibration.
+          __ Package moves DOWN continuously to 100 meters.
+          __ Waits 20 seconds for sensor equilibration.
+          __ Package moves UP continuously to 20 meters.
+
+  4. Verify parking depth: 
+
+      orcactrl> view pressure
+            Record Pressure: ___________
+
+
+
+TEST #4 -- Discrete Profiles
+
+  - Same configuration
+
+  1. Manually run a shallow cast with discrete
+     sampling:
+
+       orcactrl> profile shallow_cast_discrete
+
+     You should observe the following behaviour:
+
+          __ Waits 2 minutes for 02 sensor to warm up.
+          __ Package moves UP to 10 meters.
+          __ Waits 20 seconds for sensor equilibration.
+          __ Package moves UP to 2 meters.
+          __ Waits 20 seconds for sensor equilibration.
+          __ Package moves DOWN continuously to 20 meters.
+
+  2. Verify parking depth: 
+
+       orcactrl> view pressure
+            Record Pressure: ___________
+
+  3. Manually run a deep cast profile.  Again this will
+     be a discrete profile with intermediate stops:
+
+       orcactrl> profile deep_cast_discrete
+
+     You should observe the following behaviour:
+
+          __ Waits 2 minutes for O2 sensor to warm up.
+          __ Package moves UP to 10 meters.
+          __ Waits 20 seconds for sensor equilibration.
+          __ Package moves UP to 2 meters.
+          __ Waits 20 seconds for sensor equilibration.
+          __ Package moves DOWN continuously to 100 meters.
+          __ Waits 20 seconds for sensor equilibration.
+          __ Package moves UP to 60 meters.
+          __ Waits 20 seconds for sensor equilibration.
+          __ Package moves UP to 30 meters.
+          __ Waits 20 seconds for sensor equilibration.
+          __ Package moves UP to 20 meters.
+
+  4. Verify parking depth: 
+
+      orcactrl> view pressure
+            Record Pressure: ___________
+
+  5. Exit orcactrl:
+
+      orcactrl> quit
+    
+
+
+TEST #5 -- Automatic Profiling
+ 
+  - Same configuration 
+
+  1. Configure the program to run a profile automatically
+     and start the orca daemon "orcad".  Again for
+     safety sake have someone on the winch controls
+     should something go wrong:
+
+     Figure out a good run time:
+
+        % date
+        Tue Oct 4 09:17:23 PDT 2005
+
+     Add about 10 minutes to this time ( ie. 9:27 ) 
+     and enter it into the config file:
+
+        % nano /usr/local/orcaD/orcad.cfg
+
+     Move down in the file to the mission list and locate
+     the "Shallow_Cast_Direct" mission:
+
+        [Shallow_Cast_Discrete]
+          schedule = 0 0 * Jan *
+          cycles = 0.5
+          equilibration_time = 20
+          depths = 10
+
+     Change the schedule to your desired run time and
+     turn the month field to "*":
+
+          schedule = 27 9 * * *
+
+     Save the file and exit the editor.  
+
+  2. Startup the orcad program:
+
+        % cd /usr/local/orcaD
+        % ./orcad -d 8 
+
+  3. Check that the program started up correctly:
+
+     Look for orcad in the process listing:
+        % ps -e | grep orcad
+        #### ?        00:00:00 orcad
+
+     Read the log file:
+
+        % more /usr/local/orcaD/logs/orcad
+
+     If all went well this file should contain
+     the line:
+    
+        ##/##/## ##:##:##: orcad: Main schedule loop starting
+
+     See how much time you have left before the profile
+     starts:
+  
+        % date
+        Tue Oct 4 09:24:23 PDT 2005
+
+     Monitor the log file and wait for profile to start:
+
+        % tail -f /usr/local/orcaD/logs/orcad
+ 
+     The tail program will automatically scroll new lines
+     written to the logs/orcad file to the screen.  To
+     quit this program hit CTRL-C.
+
+  4. When the profile kicks off it should run the
+     following procedure:
+
+          __ Waits 2 minutes for 02 sensor to warm up.
+          __ Package moves UP continuously to 2 meters.
+          __ Waits 20 seconds for sensor equilibration.
+          __ Package moves DOWN continuously to 20 meters.
+
+
+  5. Kill the orca daemon:
+
+       % ps -e | grep orcad
+       #### ?        00:00:00 orcad
+
+     Note the number in the first column of the output.  This
+     is the process ID.  Now send a kill signal to the
+     process:
+
+       % kill -1 #
+
+     Check again that it is gone:
+
+       % ps -e | grep orcad
+       %
+ 
+  6. Record ending battery voltage: 
+
+       % cd /usr/local/orcaD
+       % ./orcactrl view voltage
+  
+  
+
+
+
+UNIX/Orca CheatSheet:
+
+
+  ls  :  Get a directory listing
+  df  :  Display which filesytems are mounted
+ top  :  Display an updated process listing
+  ps  :  Get a one-time process listing
+ nano :  Pico-like editor
+ alias:  Display all the shell aliases and what they are set to
+ more <filename> : List the contents of a file one page at a time
+ tail <filename> : Show just the last page of a file
+ cp   :  Copy a file
+ mv   :  Move a file
+ rm   :  Remove a file
+ man <program> : Get help on the program
+
+
+ /usr/local/orcaD    : Program where the orcad program, logs, configs 
+                       etc reside.
+ /root/sources/orcaD : Directory where the orcad source code resides.
+ 
+
+
+Winch Movement Return Codes:
+
+   1  // Success
+  -1  // A general unclassified error
+  -2  // According to the pressure the winch is moving oppositely
+  -3  // According to the counter the winch is moving oppositely
+  -4  // According to the counter the winch is not moving
+  -6  // Error obtaining pressure data
+  -7  // Error obtaining counter data
+  -8  // Error battery was too low to continue
+
+

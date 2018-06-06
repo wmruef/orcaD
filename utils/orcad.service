@@ -1,0 +1,11 @@
+[Unit]
+Description=orcaD CAST Control Daemon
+
+[Service]
+ExecStart=/usr/local/orcaD/orcad -d 4 -f
+Restart=always
+StandardOutput=null
+
+[Install]
+WantedBy=muti-user.target
+Alias=orcad.service

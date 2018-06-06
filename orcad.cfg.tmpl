@@ -1,0 +1,446 @@
+##
+## Sample Orca Configuration File
+##
+##   See below for format examples.
+##   Comments are preceded by "#" characters
+##
+
+#
+# Minimum Package Depth ( REQUIRED ) 
+#   The minimum depth ( in meters )
+#   that the package should go. 
+#   WARNING: This should be set so that the
+#            package doesn't run the risk of
+#            running into the buoy.
+#
+min_depth = 2 
+
+#
+# Maximum Package Depth  ( REQUIRED )
+#   The maximum depth ( in meters ) the package 
+#   should go.
+#   WARNING: Don't go too far. Could 
+#            end up rewinding the cable
+#            on the winch backwards.  
+#
+max_depth = 100
+
+
+#
+# Parking Depth ( REQUIRED )
+#  Depth (meters) to park the package at 
+#  when it's not in use.
+#
+parking_depth = 20
+
+
+#
+# Data File Prefix ( REQUIRED )
+#   This string will be placed in front of 
+#   all profile data files.  
+#
+#   ie. 
+#     data_file_prefix = ORCA1_CAST
+#
+#   would create a data files which 
+#   look like this:
+#
+#     ORCA1_CAST123.HEX
+#
+data_file_prefix = ORCA1_CAST
+
+
+#
+# Data Storage Directory ( REQUIRED )
+#   This is the directory where all the data
+#   will be stored.  It is a good idea to put
+#   this in a place large enough to hold your
+#   data.  Filling this up could be bad for the
+#   program.  
+#
+#   i.e
+#     data_storage_dir = /usr/local/orcaD/data
+#
+data_storage_dir = /usr/local/orcaD/data
+
+
+#
+# Weather Data Prefix ( REQUIRED )
+#   This is the string which will be 
+#   prefixed to each saved weather 
+#   data file.
+#
+#   ie. 
+#     weather_data_prefix = ORCA1_MET
+#
+weather_data_prefix = ORCA1_MET
+
+#
+# Weather Download Period ( OPTIONAL )
+#   The number of minutes between weather
+#   station archive downloads.  A new
+#   file is created for each download.
+#
+#   ie. 
+#     weather_archive_download_period = 1440;
+#
+#   Would write out a new weather data file
+#   once every 24 hours. This also happens
+#   to be the default if now value is given.
+#
+weather_archive_download_period = 1440
+
+#
+# Weather Status Filename ( OPTIONAL )
+#   If supplied this will create a file at
+#   the top of the data directory which 
+#   contains one line of the most recent
+#   ( see Status Update Period ) weather data.
+#   This file will get overwritten each time 
+#   it is updated.  
+#
+#   ie. 
+#     weather_status_filename = weather-status.dat
+#
+weather_status_filename = weather-status.dat
+
+#
+# Auxiliary sampling parameters
+# 
+# Sample period is defaulted at 15 minutes
+auxiliary_sample_period = 15
+# Archive Download Period is defaulted to daily logs (24 hours)
+auxiliary_archive_download_period = 1440
+# Auxiliary data prefix
+auxiliary_data_prefix = ORCA1_AUX
+
+
+#
+# Seabird CTD 19 Calibrations ( OPTIONAL )
+#   The Seabird CTD 19 does not store
+#   the calibration parameters onboard.
+#   These parameters are used to convert
+#   the pressure readings into a psia 
+#   (and then to decibars) value to be used
+#   by the winch movement routines.  The
+#   default parameters should be accurate
+#   enough for this task.  Should the default
+#   parameters be really off...you may
+#   enter new ones here.  
+#
+#   ie.
+#     ctd_cal_PA1 = 248.24555 
+#     ctd_cal_PA2 = -6.524518E-2
+#     ctd_cal_PA3 = 5.430179E-8
+#
+#   The above examples are also the program's
+#   defaults.
+#
+ctd_cal_PA1 = 248.24555 
+ctd_cal_PA2 = -6.524518E-2
+ctd_cal_PA3 = 5.430179E-8
+
+#
+# Meterwheel conversion factor
+#
+#   Measured in meters per rotation.  The original
+#   orca used a standalone meterwheel and it's    
+#   factor is:                                    
+#                                                 
+#   meterwheel_cfactor = 1.718213058              
+#                                                 
+#   For the Arduino Meter Wheel Counter use: 0.166
+#                                                 
+meterwheel_cfactor = 0.166                        
+
+#
+# Licor conversion parameters ( OPTIONAL )
+#
+#   The licor solar radiation instruments come with
+#   a factory calibration constant ( solar_calibration_constant )
+#   which needs to be entered here.  
+#
+# Sensor installed at PORCA currently
+# Li-Cor LI-190  Serial Number: Q40070, CalibrationDate: July 12, 2008
+# http://envprod.licor.com:8080/api/2012-04/instruments/Q40070.pdf
+solar_calibration_constant = 6.49 
+
+
+#   Li-Cor LI-190 Amplifier Characteristics  
+#   
+#   We have two amplifiers these days.  The first was designed
+#   in the UW Oceanography electronics shop by Greyson.  In
+#   order to use this amplifier you need to define two additional
+#   parameters here.  
+#
+#         solar_millivolt_resistance = Value of resistor across Li-Cor line
+#         solar_ad_multiplier = Emperically determined multiplier for OpAmp
+#
+# I.e Greyson board installed at CORCA currently
+# solar_millivolt_resistance = 599.0
+# solar_ad_multiplier = 116.667 
+#
+#   Another option is the Licor 2420 Light Sensor Amplifier which
+#   is now used on most Raspberry Pi systems.  For this amplifier you
+#   *DO NOT* need to specify the solar_millivolt_resistance or 
+#   solar_ad_multiplier parameters. In fact you *must* leave them out
+#   of this file so that the correct equations are used in weatherd.
+#
+
+# 
+# Compass Declination
+#
+#   The difference between magnetic North and true North in the
+#   region the buoy resides.  In the puget sound this only varies
+#   by a about 1 tenth of a degree at most. So we typically use
+#   16 degrees for our buoys.
+#
+compass_declination = 16.0
+
+#
+# Devices
+#
+# Indicate which devices are attached to the
+# serial ports. Currently available devices are:
+#
+#      SEABIRD_CTD_19
+#      SEABIRD_CTD_19_PLUS
+#      AGO_METER_WHEEL_COUNTER
+#      DAVIS_WEATHER_STATION
+#      ENVIROTECH_ECOLAB
+#      SATLANTIC_ISIS
+#      SATLANTIC_ISIS_X
+#      CELL_MODEM
+#      AQUADOPP
+#      ARDUINO_METER_WHEEL_COUNTER
+# 
+# An example serial port device description looks
+# like:
+#
+#  [SERIALIO]
+#    description = A happy little CTD
+#    type = SEABIRD_CTD_19
+#    tty = /dev/ttyS0
+#    baud = 9600
+#    stop_bits = 1
+#    data_bits = 8
+#    flow_control = none
+#    parity = even
+#
+# Where:
+#  type:  May be any of the ones listed above.  
+#  tty :  May only be one of ttyS0, ttyS2, ttyUSB0, ttyUSB1,
+#         ttyUSB2, and ttyUSB3.  NOTE: This is case sensitive.
+#  stop_bits: 0, 1, or 2
+#  data_bits: 1-8
+#  flow_control: rtscts, xonxoff, none
+#  parity: even, odd, none
+#
+# An example serial USB port device description looks
+# like:
+#
+#  [SERIALIO]
+#    description = A happy little Meterwheel
+#    type = ARDUINO_METER_WHEEL_COUNTER
+#    baud = 9600
+#    vendor_id =
+#    product_id =
+#
+# Where:
+#  vendor_id:  Is the vendor specific identifier for this device
+#  product_id:  Is the vendor specific product identifier for this device
+#         
+# 
+#
+
+#[SERIALIO]
+#  description = A happy little CTD
+#  type = SEABIRD_CTD_19_PLUS
+#  tty = /dev/ttyS0
+#  baud = 9600
+#  stop_bits = 1
+#  data_bits = 8 
+#  flow_control = none
+#  parity = none
+
+#[SERIALIO]
+#  description = A happy little CTD
+#  type = SEABIRD_CTD_19
+#  tty = /dev/ttyS0
+#  baud = 9600
+#  stop_bits = 1
+#  data_bits = 7 
+#  flow_control = none
+#  parity = even
+
+#[SERIALIO]
+#  description = A happy little MeterWheel
+#  type = AGO_METER_WHEEL_COUNTER
+#  tty = /dev/ttyUSB2
+#  baud = 4800
+#  stop_bits = 1
+#  data_bits = 8
+#  flow_control = none
+#  parity = none
+
+#[SERIALIO]
+#  description = A happy little MeterWheel
+#  type = ARDUINO_METER_WHEEL_COUNTER
+#  baud = 9600
+#  vendor_id = 0x0403
+#  product_id = 0x6001
+#  serial_id = A700fjHx
+
+#[SERIALIO]
+#  description = A happy little WeatherStation
+#  type = GILLMETPAK
+#  tty = /dev/ttyUSB2
+#  baud = 19200
+#  stop_bits = 1
+#  data_bits = 8
+#  flow_control = none
+#  parity = none
+
+#[SERIALIO]
+#  description = A happy little WeatherStation
+#  type = RMYOUNGWIND
+#  tty = /dev/ttyUSB3
+#  baud = 9600
+#  stop_bits = 1
+#  data_bits = 8
+#  flow_control = none
+#  parity = none
+
+#[SERIALIO]                                    
+#  description = A happy little WeatherStation
+#  type = S9VAISALA
+#  tty = /dev/ttyUSB3
+#  baud = 115200
+#  stop_bits = 1        
+#  data_bits = 8   
+#  flow_control = none
+#  parity = none
+
+#[SERIALIO]
+#  description = A happy little aquadopp
+#  type = AQUADOPP
+#  tty = /dev/ttyS2
+#  baud = 9600
+#  stop_bits = 1
+#  data_bits = 8
+#  flow_control = none
+#  parity = none
+
+#[SERIALIO]
+#  description = A happy little seafet
+#  type = SEAFETPH   
+#  tty = /dev/ttyUSB0   
+#  baud = 57600
+#  stop_bits = 1
+#  data_bits = 8
+#  flow_control = none                 
+#  parity = none
+
+#
+# Missions
+#
+# Enter the missions you would like the orca buoy to run
+# periodically.  Typical enteries will generally contain
+# the following fields:
+#
+#    [MissionName]
+#      schedule = min hour day-of-month month day-of-week
+#      cycles = #.#  
+#      equilibration_time = #
+#      aux_sample_direction = up | down | both
+#      depths = # # # ...
+#
+# Mission Name:
+#   The name to use when identifying a mission run
+#   in the logs and data files. NOTE: This name should
+#   not contain spaces ( "_" make a nice alternative ).
+# 
+# Schedule: 
+#   The frequency at which this mission should be run
+#   by the daemon.  NOTE: It is very important that you
+#   factor in how much time it takes for a mission to
+#   run when deciding how close to place missions.  If
+#   one is running when the time comes for another to 
+#   start the subsequent runs will be delayed until
+#   after the first one completes. The new UW buoy's
+#   ( with new level wind ) complete a shallow cast
+#   in approximately 6 minutes and a deep cast in
+#   approximately 16 minutes.
+#   
+#   Valid values for schedule fields are:
+#
+#       field          allowed values
+#       -----          --------------
+#       minute         0-59 or *
+#       hour           0-23 or *
+#       day of month   1-31 or *
+#       month          1-12 or Jan-Dec or *
+#       day of week    0-6 (0 is Sun) or Sun-Sat or *
+#
+#   Ranges may be used such as 1-4 or Mon-Wed etc. ( no spaces )
+#   Lists of values separated by comas may be used provided no
+#   spaces are placed in between list values. Ie. 2,3,5 or Mon,Thu,Sat
+#
+# Cycles:
+#   This parameter replaces the notion of a deep vs 
+#   shallow cast.  A complete movement of the package
+#   from parking depth to the minimum depth, down
+#   to the maximum depth and then back to the parking
+#   depth is considered 1 cycle ( equivalent of the
+#   old "deep" cast ).  A shallow cast would be 
+#   specified as a cycle of 0.5.  This allows for
+#   the option of doing several cycles in one mission.
+#   
+# Equilibration Time (seconds):
+#   The time the package should wait at each of
+#   the sampling depths, parking depth, minimum depth 
+#   and the maximum depth for the sensor to 
+#   equlibrate.
+#
+# Auxilary Sample Direction:
+#   Controls the sampling duration of the auxilary sampling
+#   instrument.  The auxilary sampling instrument is located
+#   on the second hydro serial line.  This may be an aquadopp
+#   current meter for instance.  The sampling direction should
+#   be specified as "up", "down" or "both".  A value of "up"
+#   will turn the instrument on during the ascending portions
+#   of the cast.  "down" is for descending portions only and
+#   "both" will leave the instrument on for the entire cast.
+#   The default is "both" and this parameter only takes
+#   effect when there is an auxilary instrument configured.
+#
+# Depths (meters):
+#   A list of depths to stop and take samples at.
+#   NOTE: For the time being this list needs to be
+#   in sorted order ( deepest first ).
+#      
+#
+#[Shallow_Cast_Discrete]
+#  schedule = 0 0 * Jan *
+#  cycles = 0.5
+#  equilibration_time = 20
+#  depths = 10
+
+#[Deep_Cast_Discrete]
+#  schedule = 0 0 * Jan * 
+#  cycles = 1.0
+#  equilibration_time = 20
+#  depths = 60 30 10
+
+#[Shallow_Cast_Direct]
+#  schedule = 0 0 * Jan * 
+#  cycles = 0.5
+#  aux_sample_direction = up
+#  equilibration_time = 20
+
+[Deep_Cast_Direct]
+  schedule = 0 0 * Jan * 
+  cycles = 1.0
+  aux_sample_direction = down
+  equilibration_time = 20
+

@@ -1,0 +1,1898 @@
+
+
+aquadopp.c
+==========
+   initAquadopp - Initialize the Aquadopp for normal operations
+   initAquadopp - Initialize the Aquadopp for normal operations
+   getAquadoppPrompt - Obtain a command prompt from a Aquadopp 
+   stopLoggingAquadopp - Cease Aquadopp logging
+   startLoggingAquadopp - Initiate Aquadopp logging
+   getAquadoppTime - Get the date/time from the Aquadopp 
+   setAquadoppTime - Set the date/time on the Aquadopp 
+   downloadAquadoppFiles - Download the entire aquadopp archive
+bitsyxio.c
+==========
+   initializeHardware - Initialize the BitsyX processor board and SmartIO.
+   hasSerialDevice - Do we have a serial config for a particular device
+   getHydroWireDeviceType - Get the device type for hydro wire communication
+   getDeviceFileDescriptor - Get or open a file descriptor for device type
+   closeDeviceFileDescriptor - Close cached file descriptors to device
+   setOutputLine - Set the state of a SMARTIO output line.
+   emergencyPortClear - clear all port lines to low -- quickly.
+   getADValue - Get the analog signal magnitude at a A/D port.
+   getADScaledValue - Get the analog signal magnitude at a A/D port scaled.
+buoy.c
+======
+   initializeHardware - Initialize the buoy hardware
+   hasSerialDevice - Do we have a serial config for a particular device
+   getHydroWireDeviceType - Get the device type for hydro wire communication
+   getDeviceFileDescriptor - Get or open a file descriptor for device type
+   closeDeviceFileDescriptor - Close cached file descriptors to device
+crc.c
+=====
+   crc16AddByte - append a data byte to the crc calculation
+   crc16AddData - Add an array of bytes to a crc calculation
+ctd.c
+=====
+   convertDBToDepth - Convert seawater pressure into depth
+   getCTD19SPrompt - Obtain an "S>" prompt from a Seabird CTD 19
+   stopLoggingCTD19 - Cease CTD logging and pressure output
+   startLoggingCTD19 - Initiate CTD logging and pressure output
+   getCTD19Pressure - Read a CTD line in logging mode and extract the pressure
+   downloadCTD19Data - Download CTD 19 historical data to a file
+   getCTD19Time - Get the date/time from the CTD 19.
+   setCTD19Time - Set the date/time on the CTD 19
+   htoP - Convert CTD 4 Byte Hex and convert to 14bit signed number
+   initCTD19Plus - Initialize the CTD for normal operations
+   getCTD19PlusSPrompt - Obtain an "S>" prompt from a Seabird CTD 19+
+   stopLoggingCTD19Plus - Cease CTD logging and pressure output
+   startLoggingCTD19Plus - Initiate CTD logging and pressure output
+   getCTD19PlusPressure - Read a CTD line in logging mode and 
+                          extract the pressure.
+   downloadCTD19PlusData - Download CTD 19 historical data to a file
+   getCTD19PlusTime - Get the date/time from the 19Plus CTD.
+   setCTD19PlusTime - Set the date/time on the CTD 19plus
+hydro.c
+=======
+   initHydro - Initialize the CTD for normal operations
+   stopHydroLogging - Cease logging of hydrowire device
+   startHydroLogging - Initiate logging on a hydro wire device
+   getHydroPressure - Read the pressure from the hydro-wire data stream
+   downloadHydroData - Download data archives from hydro device
+   syncHydroTime - Sync date and time on the CTD with our time.
+iotest.c
+========
+log.c
+=====
+   startLogging - initialize the program logging routines
+   logPrint - Print a message to a logging device
+   rotateLargeLog - Rotate log file if it's size is large
+   logRotate - Rotate log file
+meterwheel.c
+============
+   readMeterWheelAdjusted - Read meterwheel count and convert to meters
+   readMeterWheelCount - Read meterwheel count
+orcactrl.c
+==========
+orcad.c
+=======
+parser.c
+========
+   logOpts - Log the program's settings to a file descriptor
+   parseConfigFile - Open and parse the orcad configuration file.
+   getNextConfigTokens - Read file until one or more tokens are found.
+   advanceToNonWhitespace - Return first non-whitespace character.
+   retreatToNonWhitespace - Return last non-whitespace character.
+   tokenizeConfigLine - Attempt to break a config line into 1 or 2 tokens.
+   convArrayToRangeString - Convert a range array into a string.
+   parseCronField - Parse a schedule line and convert it to an array.
+   fixDayDow - Reconcile differences in Day and Day of Week conflicts.
+profile.c
+=========
+  profile - Run a profile mission.
+serial.c
+========
+   serialGetByte - Get a byte from a serial port
+   serialPutByte - Write a byte to a serial port
+   serialGetLine - Read a line of data from a serial port
+   serialPutLine - Write a null termined line to the serial port.
+   serialChat - Conduct a serial port "statement/response" communication.
+   serialGetData - Read up to nBytes from a serial port.
+   serialPutData - Write up to nBytes to a serial port.
+term.c
+======
+timer.c
+=======
+   getMilliSecSince - Function to retrieve the status of a timer.
+util.c
+======
+   updateDataDir - Create a new data directory if necessary.
+   openNewCastFile - Create a new data file to store CTD data for one cast.
+   openNewWeatherFile - Create a new data file to store weather data.
+   readLastCastInfo - Open and read the cast index file.
+   writeLastCastInfo - Write the last cast index to a file.
+   createLockFile - Create a lockfile to avoid running duplicate daemons
+version.c
+=========
+weather.c
+=========
+   initializeWeatherStation - Initialize the weather station hardware
+   logInstantWeather - routine to log instant weather data to a file desc.
+   downloadWeatherData - Download from the weather station archive.
+   getWSTime - Get the date/time from the weather station.
+   setWSTime - Set the date/time on the weather station.
+   syncWSTime - Sync date and time on the weather station with our time.
+   logDMPRecord - Write a weather record in RevB format to a file.
+weatherd.c
+==========
+winch.c
+=======
+   movePackageUpDiscretely - Move package up stoping at discrete levels.
+   movePackageUp - Run the winch to move the instrument package up
+   movePackageDown - Run the winch to move the instrument package down
+=============================================================
+/*********************************************************************
+=============================================================
+   NAME
+     advanceToNonWhitespace - Return first non-whitespace character.
+    
+   SYNOPSIS
+     #include "parser.h"
+  
+     char * advanceToNonWhitespace ( char * cPtr );
+  
+   DESCRIPTION
+     Return a pointer to the first non-whitespace ( not \t \r \n or ' ' )
+     in the string passed as cPtr ( must be null terminated ).
+  
+   RETURNS
+     A pointer to a non-whitespace character or to the \0 terminator
+     if non are found.
+  
+=============================================================
+   NAME
+     closeDeviceFileDescriptor - Close cached file descriptors to device
+  
+   SYNOPSIS
+     #include "buoy.h"
+  
+     int closeDeviceFileDescriptor( int deviceType );
+  
+   DESCRIPTION
+     This is a helper function which will search the cache of
+     open file descriptors for a particular device type and attempt
+     to close them.
+   
+   RETURNS
+     1 Upon success
+    -1 Upon failure
+  
+=============================================================
+   NAME
+     convArrayToRangeString - Convert a range array into a string.
+  
+   SYNOPSIS
+     #include "parser.h"
+  
+     char * convArrayToRangeString ( char *ary, int arraySize,
+                                     const char *const *names );
+  
+   DESCRIPTION
+     A range array is a character array where a value of 1
+     indicates that the position is set.  This function reads
+     an array of arraySize and turns this encoding into a
+     human readable range string.
+  
+      ie. given:
+  
+        ary = 0, 1, 1, 1, 0, 1, 0
+  
+      This function returns:
+  
+        "1-3,5"
+  
+   RETURNS
+     A range string or null.
+  
+=============================================================
+   NAME
+     convertDBToDepth - Convert seawater pressure into depth
+  
+   SYNOPSIS
+     #include "ctd.h"
+  
+     double convertDBToDepth( double db );
+  
+   DESCRIPTION
+     From the SEASOFT CTD Manual:
+  
+      "For seawater depth, SEASOFT uses the formula in UNESCO 
+       technical papers in Marine Science No. 44. This is 
+       an empirical formula that takes compressibility 
+       (i.e., integrates density) into account. An ocean water
+       column at t = 0 and s = 35 is assumed.
+  
+       The gravity variation with latitude is computed as:
+  
+         gr = 9.780318 * (1.0 + (5.2788e-3 + 2.36e-5 * x) * x) + 
+              1.092e-6 * p;
+  
+         where x = [sin (latitude / 57.29578)]^2
+         Then, depth d in meters is calculated from pressure p
+         in decibars:
+  
+         seawater depth in meters = 
+               [(((-1.82e-15 * p + 2.279e-10) * 
+                p - 2.2512e-5) * p + 9.72659) * p] / gr
+  
+     The input parameter db is the pressure from the CTD
+     in decibars.
+  
+   RETURNS
+     The depth in meters. 
+  
+=============================================================
+   NAME
+     crc16AddByte - append a data byte to the crc calculation
+  
+   SYNOPSIS
+     #include "crc.h"
+  
+     int crc16AddByte( unsigned char data, unsigned int crc );
+  
+   DESCRIPTION
+     This routine continues a crc calculation by serially 
+     adding a databyte to the result.  The current crc
+     value is passed in as "crc" and the byte to be added
+     as "data".
+  
+     Example:
+        int main(int argc, char *argv[], char *envp[])
+        {
+          unsigned int crc = 0;
+  
+          crc = crc16AddByte( 0xC6, crc );
+          crc = crc16AddByte( 0xCE, crc );
+          printf("crc = %x %x\n", (( crc >> 8 ) & 0xFF), ( crc & 0xFF ) );
+        }
+  
+   RETURNS
+     The new crc value.
+  
+=============================================================
+   NAME 
+     crc16AddData - Add an array of bytes to a crc calculation
+  
+   SYNOPSIS
+     #include "log.h"
+  
+     crc16AddData( unsigned char *data, long numBytes, 
+                   unsigned int crc ); 
+  
+   DESCRIPTION
+     Given an existing crc value ( may be 0 to begin a 
+     calculation ) append an array of bytes to the calculation
+     and return the result.  The length of the array is specified
+     in numBytes.
+     
+     Example:
+        int main(int argc, char *argv[], char *envp[])
+        {
+          unsigned int crc = 0;
+          unsigned char data[4];
+  
+          data[0] = 0xC6;
+          data[1] = 0xCE;
+          data[2] = 0xA2;
+          data[3] = 0x03;
+          crc = crc16AddData( data, 4, crc);
+          printf("crc = %x %x\n", (( crc >> 8 ) & 0xFF), ( crc & 0xFF ) );
+        }
+  
+  
+   RETURNS
+     The new crc.
+  
+=============================================================
+   NAME
+     createLockFile - Create a lockfile to avoid running duplicate daemons
+  
+   SYNOPSIS
+     #include "util.h"
+  
+     int createLockFile( char *lckFileName, char * prgName );
+  
+   DESCRIPTION
+     Create a file containing the PID of the running program and
+     named lckFileName.  If this file exists and is locked by another
+     process then log the reason for failure and return -1.
+  
+   RETURNS
+     1 Upon success
+    -1 Upon failure
+  
+=============================================================
+   NAME
+     downloadAquadoppFiles - Download the entire aquadopp archive
+  
+   SYNOPSIS
+     #include "aquadopp.h"
+  
+     int downloadAquadoppFiles( int aquadoppFD );
+  
+   DESCRIPTION
+  
+   RETURNS
+      1 Upon success
+     -1 Upon failure
+  
+=============================================================
+   NAME
+     downloadCTD19Data - Download CTD 19 historical data to a file
+   
+   SYNOPSIS
+     #include "ctd.h"
+  
+     int downloadCTD19Data( int ctdFD, FILE *outFile );
+  
+   DESCRIPTION
+     Communicate with a Seabird 19 CTD and download
+     all the stored casts to a file.  Communications
+     to the CTD oocur through a pre-initialized file
+     descriptor port. Data output goes directly to
+     a pre-initialized output file descriptor.
+  
+     The communications with the CTD are provided through
+     an open/initialized file descriptor ctdFD.  The output
+     file is passed in as outFile and should be already opened
+     and writable.
+  
+   RETURNS
+       The CTD's status paragraph (ds), header paragraph (dh)
+       and cast hex data ( dc ), formated  and written to
+       the data file.  The data file remains open.  Upon
+       success a 1 is returned otherwise -1 is returned.
+       Specific problems are logged at a LVL_WARN level.
+       
+     TODO: I would like to clean this up so that it only
+           writes the data expected by the SEABIRD software 
+           and nothing extraneous.  At this point it will
+           include (or not) any echoed commands.  It also
+           should check the data before committing to the 
+           success of the download...perhaps we can read the
+           number of samples and check the data width of
+           each as they come in.
+  
+=============================================================
+   NAME
+     downloadCTD19PlusData - Download CTD 19 historical data to a file
+   
+   SYNOPSIS
+     #include "ctd.h"
+  
+     int downloadCTD19PlusData( int ctdFD, FILE *outFile );
+  
+   DESCRIPTION
+     Communicate with a Seabird 19+ CTD and download
+     all the stored casts to a file.  Communications
+     to the CTD oocur through a pre-initialized file
+     descriptor port. Data output goes directly to
+     a pre-initialized output file descriptor.
+  
+     The communications with the CTD are provided through
+     an open/initialized file descriptor ctdFD.  The output
+     file is passed in as outFile and should be already opened
+     and writable.
+  
+     NOTE: This routine also puts the CTD to sleep.
+  
+   RETURNS
+       The CTD's status paragraph (ds), header paragraph (dh)
+       and cast hex data ( dc ), formated  and written to
+       the data file.  The data is returned in OUTPUTFORMAT=0
+       which is raw HEX.  The data file remains open.  Upon
+       success a 1 is returned otherwise -1 is returned.
+       Specific problems are logged at a LVL_WARN level.
+       
+     TODO: I would like to clean this up so that it only
+           writes the data expected by the SEABIRD software 
+           and nothing extraneous.  At this point it will
+           include (or not) any echoed commands.  It also
+           should check the data before committing to the 
+           success of the download...perhaps we can read the
+           number of samples and check the data width of
+           each as they come in.
+  
+=============================================================
+   NAME
+     downloadHydroData - Download data archives from hydro device
+   
+   SYNOPSIS
+     #include "hydro.h"
+  
+     int downloadHydroData( int hydroDeviceType, int hydroFD, FILE *outFile );
+  
+   DESCRIPTION
+     Download data stored in the data logger attached to the
+     hydro wire. The communications with the hydro wire are 
+     provided through an open/initialized file descriptor hydroFD.
+     The output file is passed in as outFile and should be 
+     already opened and writable.
+  
+   RETURNS
+     Data is written to the file and the file remains open.
+     Upon success a 1 is returned otherwise -1 is returned.
+     Specific problems are logged at a LVL_WARN level.
+       
+=============================================================
+   NAME
+     downloadWeatherData - Download from the weather station archive.
+  
+   SYNOPSIS
+     #include "weather.h"
+  
+     int downloadWeatherData( int wsFD, FILE * outFile, int lastRecordOnly );
+  
+   DESCRIPTION
+     Download data from the Davis weather data logger's archive.
+     This routine can either download all the data and write it
+     to a file or simply the last data record if "lastRecordOnly" 
+     is set to 1.  The outfile must be open and ready for writing
+     and the wsFD file descriptor must be open to the Davis
+     weather station communications port.  If the entire archive
+     is downloaded the archive is cleared before the routine
+     returns.
+  
+   RETURNS
+     Writes data to the outFile and flushes it at the end.
+     Returns 1 upon success and -1 upon failure.
+  
+=============================================================
+   NAME
+     emergencyPortClear - clear all port lines to low -- quickly.
+  
+   SYNOPSIS
+     #include "bitsyxio.h"
+  
+     int emergencyPortClear( char * port );
+  
+   DESCRIPTION
+     A simple routine to set all port lines to low without
+     too much overhead.  This is used when attempting to 
+     shutdown mechanical hardware ( such as the winch )
+     quickly after something goes wrong.
+  
+   RETURNS
+     Signal kind ( not quite safe ) 
+     routine to set port lines to low
+  
+=============================================================
+   NAME
+     fixDayDow - Reconcile differences in Day and Day of Week conflicts.
+  
+   SYNOPSIS
+     #include "parser.h"
+  
+     fixDayDow(struct mission * misn);
+  
+   DESCRIPTION
+     Culled from the BusyBox version of crond.  Hats off to them.
+     Reconciles the difference between two conflicting Day and
+     Day of Week specifications in a cron schedule array.
+  
+   RETURNS
+     Nothing
+  
+=============================================================
+   NAME
+     getADScaledValue - Get the analog signal magnitude at a A/D port scaled.
+  
+   SYNOPSIS
+     #include "bitsyxio.h"
+  
+     short getADScaledValue( char line );
+  
+   DESCRIPTION
+     Open the A/D port on the bitsyx and read the
+     A/D line raw value and scale it. 
+  
+   RETURNS
+     The raw voltage on the line scaled or -1 if something
+     went wrong.
+  
+=============================================================
+   NAME
+     getADValue - Get the analog signal magnitude at a A/D port.
+  
+   SYNOPSIS
+     #include "bitsyxio.h"
+  
+     short getADValue( char line );
+  
+   DESCRIPTION
+     Open the A/D port on the bitsyx and read the
+     A/D line.  
+  
+   RETURNS
+     The raw voltage on the line or -1 if something
+     went wrong.
+  
+=============================================================
+   NAME
+     getAquadoppPrompt - Obtain a command prompt from a Aquadopp 
+  
+   SYNOPSIS
+     #include "aquadopp.c"
+  
+     int getAquadoppPrompt( int aquadoppFD );
+  
+   DESCRIPTION
+     The Aquadopp may be in one of three modes of operation:
+     Command Mode, Power Down, or Data Collection Mode. 
+     This routine ensures the instrument is in Command Mode
+     before continuing.
+     
+   RETURN VALUE
+     The function returns 1 if succesful or 
+     a -1 upon failure.
+  
+=============================================================
+   NAME
+     getAquadoppTime - Get the date/time from the Aquadopp 
+  
+   SYNOPSIS
+     #include "aquadopp.h"
+   
+     struct tm *getAquadoppTime( int aquadoppFD );
+  
+   DESCRIPTION
+     Get the date and time in UNIX struct tm format from 
+     the Aquadopp
+  
+   RETURNS
+     A pointer to a tm structure or NULL upon
+     failure.
+  
+=============================================================
+   NAME
+     getCTD19PlusPressure - Read a CTD line in logging mode and 
+                            extract the pressure.
+  
+   SYNOPSIS
+     #include "ctd.h"
+  
+     double getCTD19PlusPressure( int ctdFD );
+  
+   DESCRIPTION
+     The Seabird CTD 19+ streams measurement data to the serial port
+     in addition to saving it in the on-board data-logger.  This
+     is useful if you want to monitor the sampling as it happens.
+     This routine assumes that the CTD 19+ has been placed in
+     OUTPUTFORMAT=3 or Decimal Engineering Units.  In this
+     format the CTD 19+ displays as the first 3 comma seperated
+     floating point numbers: temperature, conductivity and 
+     pressure ( in decibars ).  This routine captures the
+     pressure value and returns it.
+  
+   RETURNS
+     The pressure in decibars or -1 for in the event of failure.
+  
+   WARNING: Do not add LOGGING TO THIS FUNCTION.  We do not 
+            want this function to block! It is used by 
+            the movePackageUp/Down functions!
+=============================================================
+   NAME
+     getCTD19PlusSPrompt - Obtain an "S>" prompt from a Seabird CTD 19+
+  
+   SYNOPSIS
+     #include "ctd.c"
+  
+     int getCTD19PlusSPrompt( int ctdFD );
+  
+   DESCRIPTION
+     The Seabird CTD 19+ "S>" prompt is the main command
+     prompt.  Often the CTD is already waiting at an
+     "S>" prompt when this function is called.  Other times
+     the CTD may be in a data transfer mode ( such as "STARTNOW" ).
+     Unlike the older models ( 19  etc ) the 19+ can communicate
+     at higher baud rates ( currently 9600 ) so we do not need
+     to switch the baud rate.  If the CTD is logging this
+     routine will first shut off logging using the STOP
+     command and then attempt to deliver a clean S> prompt.
+  
+   RETURN VALUE
+     The function returns 1 upon success and a -1 upon failure.
+  
+=============================================================
+   NAME
+     getCTD19PlusTime - Get the date/time from the 19Plus CTD.
+  
+   SYNOPSIS
+     #include "ctd.h"
+   
+     struct tm *getCTD19PlusTime( int ctdFD );
+  
+   DESCRIPTION
+     Get the date and time in UNIX struct tm format from 
+     the Seabird CTD 19plus
+  
+   RETURNS
+     A pointer to a tm structure or NULL upon
+     failure.
+  
+=============================================================
+   NAME
+     getCTD19Pressure - Read a CTD line in logging mode and extract the pressure
+  
+   SYNOPSIS
+     #include "ctd.h"
+  
+     double getCTD19Pressure( int ctdFD );
+  
+   DESCRIPTION
+     The Seabird CTD 19 streams measurement data to the serial port
+     in addition to saving it in the on-board data-logger.  This
+     is useful if you want to monitor the sampling as it happens.
+     The 4 bytes of the 26 byte data stream record store the
+     current pressure measurement.  This routine obtains a current
+     record, extracts the pressure bytes and converts them to
+     meters.
+  
+   RETURNS
+     The depth in meters or -1 for in the event of failure.
+  
+   WARNING: Do not add LOGGING TO THIS FUNCTION.  We do not 
+            want this function to block! It is used by 
+            the movePackageUp/Down functions!
+=============================================================
+   NAME
+     getCTD19SPrompt - Obtain an "S>" prompt from a Seabird CTD 19
+  
+   SYNOPSIS
+     #include "ctd.c"
+  
+     int getCTD19SPrompt( int ctdFD );
+  
+   DESCRIPTION
+     The Seabird CTD 19 "S>" prompt is the main command
+     prompt.  Often the CTD is already waiting at an
+     "S>" prompt when this function is called.  Other times
+     the CTD may be in a data transfer mode ( such as "GL" )
+     or at a different baud rate than the program is expecting.
+     This function attempts to correct for both of these
+     cases.  The input parameter is an open file descriptor
+     to a Seabird CTD 19.
+  
+   RETURN VALUE
+     The function returns the baud rate of the CTD upon 
+     success and a -1 upon failure.
+  
+=============================================================
+   NAME
+     getCTD19Time - Get the date/time from the CTD 19.
+  
+   SYNOPSIS
+     #include "ctd.h"
+   
+     struct tm *getCTD19Time( int ctdFD );
+  
+   DESCRIPTION
+     Get the date and time in UNIX struct tm format from 
+     the Seabird CTD 19
+  
+   RETURNS
+     A pointer to a tm structure or NULL upon
+     failure.
+  
+=============================================================
+   NAME
+     getDeviceFileDescriptor - Get or open a file descriptor for device type
+  
+   SYNOPSIS
+     #include "buoy.h"
+  
+     int getDeviceFileDescriptor( int deviceType );
+  
+   DESCRIPTION
+     Return an open file descriptor to the device type 
+     listed.  This will check a list of cached open
+     file descriptors before attempting to open one
+     up itself.
+  
+   RETURNS
+     The open file descriptor or -1 upon failure.
+  
+=============================================================
+   NAME
+     getHydroPressure - Read the pressure from the hydro-wire data stream
+  
+   SYNOPSIS
+     #include "hydro.h"
+  
+     double getHydroPressure( int hydroDeviceType, int hydroFD );
+  
+   DESCRIPTION
+     This routine simply decodes the hydro devices data stream
+     and pulls out the pressure data.
+  
+   RETURNS
+     The depth in meters or -1 for in the event of failure.
+  
+   WARNING: Do not add LOGGING TO THIS FUNCTION.  We do not 
+            want this function to block! It is used by 
+            the movePackageUp/Down functions!
+=============================================================
+   NAME
+     getHydroWireDeviceType - Get the device type for hydro wire communication
+  
+   SYNOPSIS
+     #include "buoy.h"
+  
+     int getHydroWireDeviceType();
+  
+   DESCRIPTION
+     Determine which type of hydro device is supposed to be 
+     on the other end of the hydro wire.  This is obtained
+     by looking at the config file.  There is no check to 
+     see if this is the actual device on the other end.
+  
+   RETURNS
+     The device type on the other end of the hydro wire.
+     Currently one of:
+       SEABIRD_CTD_19
+       SEABIRD_CTD_19_PLUS 
+       ENVIROTECH_ECOLAB
+       SATLANTIC_ISIS
+       SATLANTIC_ISIS_X
+  
+     See buoy.h for device types
+     This function will return -1 if it fails.
+  
+=============================================================
+   NAME
+     getMilliSecSince - Function to retrieve the status of a timer.
+  
+   SYNOPSIS
+     #include "timer.h"
+  
+     suseconds_t getMilliSecSince( struct timeval *startTime );
+  
+   DESCRIPTION
+     Given the start time as startTime calculate the difference
+     in milli seconds from that time to now.
+  
+   RETURNS
+     The number of milliseconds which have passed or -1 if
+     an error occurs.
+  
+=============================================================
+   NAME
+     getNextConfigTokens - Read file until one or more tokens are found.
+  
+   SYNOPSIS
+     #include "general.h"
+     #include "parser.h"
+  
+     int getNextConfigTokens( FILE *fIN, char *buffer, char **name,
+                              char **value, int *linesRead );
+  
+   DESCRIPTION
+     Read from an open file pointed to by fIN until a line
+     is reached containing one or more tokens.  The function
+     should be passed a buffer of FILEBUFFLEN ( see general.h ) 
+     which is used to store the last line read.  The function
+     also increments a file line counter passed in as "linesRead".
+  
+   RETURNS
+     Upon sucess the function will return the number of tokens
+     read ( currently allows only 1 or 2 per line ) or 0 if the
+     end of file is reached.  The tokens are returned via the
+     "name" and "value" character buffers passed to the function.
+     "name" is used if only one token is on the line.
+  
+     In the even of an error the function returns -1.
+  
+=============================================================
+   NAME
+     getWSTime - Get the date/time from the weather station.
+  
+   SYNOPSIS
+     #include "weather.h"
+   
+     struct tm *getWSTime( int fd );
+  
+   DESCRIPTION
+     Get the date and time in UNIX struct tm format from 
+     the Davis weather station.
+  
+   RETURNS
+     A pointer to a tm structure or NULL upon
+     failure.
+  
+=============================================================
+   NAME
+     hasSerialDevice - Do we have a serial config for a particular device
+  
+   SYNOPSIS
+     #include "buoy.h"
+  
+     int hasSerialDevice( int deviceType );
+  
+   DESCRIPTION
+     A helper function which queries the configuration ( set by the
+     config file ) for a serial port configuration given it's device
+     type.  
+  
+   RETURNS
+     -1 If no device exists
+      1 If device exists
+  
+=============================================================
+   NAME
+     htoP - Convert CTD 4 Byte Hex and convert to 14bit signed number
+  
+   SYNOPSIS
+     #include "ctd.h"
+  
+     void htoP( char str[], int startc, int endc, double *P);
+  
+   DESCRIPTION
+     Written for the original ORCA project.  This function has
+     be borrowed for the new project.  Here is the original
+     description:
+       "htoP: take the four hexadecimal (15 bit) character pressure,
+        disregards bit 15, interprets bit 14 as the sign (1=neg, 0=pos) 
+        and interprets bits 0-13 as the pressure magnitude"
+  
+   RETURNS
+     The converted number is stored in the double pointed to by
+     the input parameter P. 
+  
+=============================================================
+   NAME
+     initAquadopp - Initialize the Aquadopp for normal operations
+  
+   SYNOPSIS
+     #include "aquadopp.c"
+  
+     int initAquadopp( int aquadoppFD );
+  
+   DESCRIPTION
+     The Aquadopp  blah blah blah
+  
+   RETURN VALUE
+     The function returns 1 upon success and a -1 upon failure.
+  
+=============================================================
+   NAME
+     initCTD19Plus - Initialize the CTD for normal operations
+  
+   SYNOPSIS
+     #include "ctd.c"
+     
+     int initCTD19Plus( int ctdFD );
+  
+   DESCRIPTION
+     The 19 Plus CTD can be configured in many different ways.
+     In order to be sure it is setup for our use this routine
+     sets specific settings on the CTD.  Currently we
+     want the CTD set to:
+  
+        MP mode
+        AUTORUN=n
+        IGNORESWITCH=y
+        OUTPUTFORMAT=3
+  
+   RETURN VALUE
+     The function returns 1 upon success and a -1 upon failure.
+  
+=============================================================
+   NAME
+     initHydro - Initialize the CTD for normal operations
+  
+   SYNOPSIS
+     #include "hydro.h"
+     
+     int initHydro( int hydroDeviceType, int hydroFD );
+  
+   DESCRIPTION
+     Initialize the hydro device for general operations.
+     This operation differs for each type of device attached.
+     See individual device init routines for specifics.
+  
+   RETURN VALUE
+     The function returns 1 upon success and a -1 upon failure.
+  
+=============================================================
+   NAME
+     initializeHardware - Initialize the buoy hardware
+  
+   SYNOPSIS
+     #include "buoy.h"
+  
+     int initializeHardware();
+  
+   DESCRIPTION
+     Setup the BitsyX processor board prior to use with the OrcaD
+     package.  This is called prior to doing any I/O operations.
+     
+     The basic intializations are:
+  
+       - Set the SMARTIO option to SMARTIO_INIT_OPTION as defined
+         in buoy.h.  Currently this is set to 2 which indicates
+         tot SMARTIO system that PORT A should be an A/D converter
+         and all other ports as I/O.
+  
+       - This resets the winch power to off and direction to up ( a
+         low voltage on the direction port ). 
+  
+       - Turns on external hardware if defined in the config file.
+         This includes the hydro wire power, the weather station power,
+         and the meterwheel power.
+  
+       - Initialize the communication ports for devices which 
+         are defined in the config file.  This includes the hydro
+         device, the weather station, and the meterwheel.
+  
+   RETURNS
+     -1 Upon failure
+      1 Upon Success
+  
+=============================================================
+   NAME
+     initializeWeatherStation - Initialize the weather station hardware
+  
+   SYNOPSIS
+     #include "weather.h"
+  
+     int initializeWeatherStation( int wsFD );
+  
+   DESCRIPTION
+     The Davis weather station contains an onboard data logger
+     which is responsible for communicating with the various
+     optional weather intstruments.  This routine tests that
+     we can communicate with the weather station, sync
+     the weather station data loggers clock with ours,
+     clear the volatile data archive and lastly start the
+     logging of data.
+  
+   RETURNS
+     1 Upon success
+    -1 Upon failure
+  
+=============================================================
+   NAME
+     logDMPRecord - Write a weather record in RevB format to a file.
+  
+   SYNOPSIS
+     #include "weather.h"
+  
+     int logDMPRecord( FILE * outFile, struct weatherDMPRevB *rec );
+  
+   DESCRIPTION
+     Given a Davis weather station record "rec" write a one line
+     record to a file containing particluar fields.  
+  
+   RETURNS
+     1 Upon success
+    -1 Upon failure
+  
+=============================================================
+   NAME
+     logInstantWeather - routine to log instant weather data to a file desc.
+  
+   SYNOPSIS
+     #include "weather.h"
+  
+     int logInstantWeather( int wsFD, FILE * outFile );
+  
+   DESCRIPTION
+     This function is used by orcad to display instantaneous
+     weather data to the screen or file.  The weather station
+     communications file descriptor should be opened and
+     ready for reading/writing.  The outFile should be opened
+     and ready for writing.
+  
+   RETURNS
+     1 Upon success
+    -1 Upon failure
+  
+=============================================================
+   NAME
+     logOpts - Log the program's settings to a file descriptor
+  
+   SYNOPSIS
+     #include "general.h"
+     #include "parser.h"
+  
+     logOpts( FILE * fd );
+  
+   DESCRIPTION
+     Log the program's settings in a human readable report
+     format.  This is used by orcad and orcactrl to print
+     the settings to a log file or to the screen.  This
+     function expects an open an writable file descriptor
+     as it's only parameter.
+  
+   RETURNS
+     Nothing.  Flushes but does not close the passed file
+     descriptor.
+  
+=============================================================
+   NAME
+     logPrint - Print a message to a logging device
+  
+   SYNOPSIS
+     #include "log.h"
+   
+     int logPrint( int level, char *message, ... );
+  
+   DESCRIPTION
+     Log a line to the log file.
+   
+   RETURNS
+     1 on Success
+    -1 on Failure
+  
+=============================================================
+   NAME
+     logRotate - Rotate log file
+  
+   SYNOPSIS
+     #include "log.h"
+  
+     int logRotate( char *fileName );
+  
+   DESCRIPTION
+     Rotate the log file.  This involves closing the
+     old one, create a new name for it, renaming it,
+     and starting a new log file for the program.
+  
+   RETURNS
+     1 on Success
+    -1 on Failure
+  
+=============================================================
+   NAME
+     movePackageDown - Run the winch to move the instrument package down
+  
+   SYNOPSIS
+     #include "winch.h"
+  
+     int movePackageDown( int hydroFD, int hydroDeviceType, 
+                          int mwFD, int tgtDepth );
+  
+   DESCRIPTION
+    Move the package down to tgtDepth using a pressure and
+    meter wheel counter as a guide.  This routine should
+    be protected from signal interrupts!  Should this
+    be interrupted while the winch is turned on you may
+    crash the package into the buoy!!!!
+  
+      hydroFD: An open file descriptor to a hydrowire
+               device which is **currently** producing 
+               pressure data. 
+  
+      mwfd:    An open file descriptor to a meter wheel
+               counter.
+  
+      tgtDepth: The depth which you would like to move
+                the package to.
+  
+   RETURNS
+  
+       ESUCC   Success!
+       EUNKN   A general unclassified error
+       EPROP   According to the pressure the winch is moving oppositely
+       ECTOP   According to the counter the winch is moving oppositely
+       ECTST   According to the counter the winch is not moving
+       EPRES   Error obtaining pressure data
+       ECOUN   Error obtaining counter data
+  
+=============================================================
+   NAME
+     movePackageUp - Run the winch to move the instrument package up
+  
+   SYNOPSIS
+     #include "winch.h"
+  
+     int movePackageUp( int hydroFD, int hydroDeviceType, 
+                        int mwFD, int tgtDepth );
+  
+   DESCRIPTION
+    Move the package up to tgtDepth using a pressure and
+    meter wheel counter as a guide.  This routine should
+    be protected from signal interrupts!  Should this
+    be interrupted while the winch is turned on you may
+    crash the package into the buoy!!!!
+  
+      hydroFD: An open file descriptor to a hydrowire
+               device which is **currently** producing 
+               pressure data. 
+  
+      mwfd:    An open file descriptor to a meter wheel
+               counter.
+  
+      tgtDepth: The depth which you would like to move
+                the package to.
+  
+   RETURNS:
+      
+       ESUCC   Success!
+       EUNKN   A general unclassified error
+       EPROP   According to the pressure the winch is moving oppositely
+       ECTOP   According to the counter the winch is moving oppositely
+       ECTST   According to the counter the winch is not moving
+       EPRES   Error obtaining pressure data
+       ECOUN   Error obtaining counter data
+  
+=============================================================
+   NAME
+     movePackageUpDiscretely - Move package up stoping at discrete levels.
+  
+   SYNOPSIS
+     #include "winch.h"
+  
+     int movePackageUpDiscretely( int hydroFD, int hydroDeviceType,
+                                  int mwFD, int tgtDepth,
+                                  int *discreteDepths, int numDiscreteDepths );
+  
+   DESCRIPTION
+     Move the package up stoping at discrete levels defined by the
+     discreteDepths array.
+  
+   RETURNS
+  
+       ESUCC   Success!
+       EUNKN   A general unclassified error
+       EPROP   According to the pressure the winch is moving oppositely
+       ECTOP   According to the counter the winch is moving oppositely
+       ECTST   According to the counter the winch is not moving
+       EPRES   Error obtaining pressure data
+       ECOUN   Error obtaining counter data
+  
+=============================================================
+   NAME
+     openNewCastFile - Create a new data file to store CTD data for one cast.
+  
+   SYNOPSIS
+      #include "util.h"
+  
+      int openNewCastFile();
+  
+   DESCRIPTION
+     This routine calls the updateDataDir() to create ( if necessary )
+     a new data subdirectory.  It then increments the opts.lastCastNum
+     global and stores it in a file by calling writeLastCastInfo().
+     Lastly the file is created using the opts.dataFilePrefix global
+     along with the cast number and "HEX" extension.
+  
+   RETURNS
+      1   :  Success
+     -1   :  Failure
+  
+=============================================================
+   NAME
+     openNewWeatherFile - Create a new data file to store weather data.
+  
+   SYNOPSIS
+      #include "util.h"
+  
+      int openNewWeatherFile();
+  
+   DESCRIPTION
+     This routine calls the updateDataDir() to create ( if necessary )
+     a new data subdirectory.  It then opens up a new file with the
+     name YYYYMMDDhhmm.MET where Y=Year, M=Month, D=day, h=hour, 
+     m=minute.  
+  
+   RETURNS
+      1   :  Success
+     -1   :  Failure
+  
+=============================================================
+   NAME
+     parseConfigFile - Open and parse the orcad configuration file.
+  
+   SYNOPSIS
+     #include "general.h"
+     #include "parser.h"
+  
+     int parseConfigFile( char *fileName );
+  
+   DESCRIPTION
+     Opens and reads the orcad configuration file.  
+  
+   RETURNS
+     1 Upon success
+    -1 Upon failure
+  
+=============================================================
+   NAME
+     parseCronField - Parse a schedule line and convert it to an array.
+  
+   SYNOPSIS
+     #include "parser.h"
+  
+     char * parseCronField( char *ary, int modvalue, int off,
+                            const char *const *names, char *ptr );
+  
+   DESCRIPTION
+     This routine is culled from the BusyBox version of
+     chrond. Hats off to them.  Basically this routine
+     parses a standard chron schedule fields and converts
+     them to byte mask arrays for each field.
+  
+   RETURNS
+     The remains of the schedule line or NULL.
+  
+=============================================================
+   NAME
+    profile - Run a profile mission.
+  
+   SYNOPSIS
+     #include "profile.h"
+  
+     int profile( struct mission *missn );
+  
+   DESCRIPTION
+     Given the mission parameters ( missn ) run a profile
+     of the instrument package. 
+  
+     BASIC PROFILE FLOW:
+  
+     1. Activate CTD
+     2. Get pressure from CTD
+         a. Exit if pressure is not within range.
+     3. Wait 2 minutes for oxygen sensor to warm up.
+     4. Check battery voltage
+     5. Go up to surface discrete sampling along the way.
+         a. Subtract 0.25 from cycle.
+     6. Recheck pressure
+     7. Recheck battery voltage 
+     8. Wait for 20 seconds for sensors to equilibrate
+     9. While cycle > 0 
+          a. Perform one of the following operations depending
+             on the state of cycle counter:
+                - Go down to the bottom in one continuous motion.
+                - Go down to the parking depth.
+                - Go up to the surface discrete sampling the whole way.
+                - Go up to parking depth sampling the whole way.
+          b. Subtract the equivalant cycle amount from the cycle counter.
+    10. Stop CTD Logging
+  
+    A profile cycle is best visualized as a sine wave where
+    the baseline is the parking depth of the package.  The
+    top of the cycle is the shallow depth and bottom of the wave
+    is the deep depth of a cast.  A complete cycle would be 
+    a profile which goes from parking depth to shallow, to deep
+    and then back to parking depth. I.e:
+  
+       cycle = 0.5 = shallow cast
+       cycle = 1.0 = deep cast
+       cycle = 1.5 = deep + shallow etc.
+  
+   RETURNS
+     1 Upon success
+    -1 Upon failure
+  
+=============================================================
+   NAME
+     readLastCastInfo - Open and read the cast index file.
+  
+   SYNOPSIS
+     #include "util.h"
+  
+     long readLastCastInfo();
+  
+   DESCRIPTION
+     The last cast index file is a file which stores
+     the state of the cast index number.  A file separate
+     from the config file was choosen to simplify the
+     parsing and modification of this simple parameter.
+     The number stored in this file represents the last
+     index used.  The file name is stored in the global
+     parameter opts.dataDirName/CASTIDXFILE.
+  
+   RETURNS
+      1 Upon Success
+     -1 Upon failure
+  
+=============================================================
+   NAME
+     readMeterWheelAdjusted - Read meterwheel count and convert to meters
+  
+   SYNOPSIS
+     #include "meterwheel.h"
+  
+     float readMeterWheelAdjusted( int mwFD );
+  
+   DESCRIPTION
+     Read the meterwheel count and adjust distance for wheel
+     size.  See meterwheel.h for conversion factor information.
+     Note that the meterwheel counter's memory is volatile so 
+     the depth is relative to the position of the cable at
+     the time the counter circuit was powered up ( or manually
+     reset by the switch in the pressure case ). Also be aware
+     that the counter will recycle at 999.9 meters.
+    
+   RETURNS
+     The meterwheel count in meters.   
+  
+=============================================================
+   NAME
+     readMeterWheelCount - Read meterwheel count
+  
+   SYNOPSIS
+     #include "meterwheel.h"
+  
+     float readMeterWheelCount( int mwFD );
+  
+   DESCRIPTION
+     Read the meterwheel counter.  Note that the meterwheel 
+     counter's memory is volatile so the depth is relative 
+     to the position of the cable at the time the counter 
+     circuit was powered up ( or manually reset by the switch
+     in the pressure case ). Also be aware that the counter
+     will recycle at 999.9 meters.
+  
+   RETURNS
+     The wheel count in rotations.
+  
+   WARNING: Do not log this function!  We do not
+            want this to block since its used by
+            the movePackageUp/Down routines!
+  
+=============================================================
+   NAME
+     retreatToNonWhitespace - Return last non-whitespace character.
+  
+   SYNOPSIS
+     #include "parser.h"
+  
+     char * retreatToNonWhitespace( char * cPtr, char *bPtr );
+  
+   DESCRIPTION
+     Return a pointer to the previous non-whitespace character
+     ( not \t \r \n or ' ' ) from cPtr up until bPtr is reached.
+  
+   RETURNS
+     A pointer to a non-whitespace character or bPtr if
+     non are found.
+  
+=============================================================
+   NAME
+     rotateLargeLog - Rotate log file if it's size is large
+  
+   SYNOPSIS
+     #include "log.h"
+  
+     int rotateLargeLog( char *fileName, int size );
+  
+   DESCRIPTION
+     Rotate the log file if it's size is greater than 
+     the "size" parameter.
+  
+   RETURNS
+     1 on Success
+    -1 on Failure
+  
+=============================================================
+   NAME
+     serialChat - Conduct a serial port "statement/response" communication.
+  
+   SYNOPSIS
+     #include "serial.h"
+  
+     int serialChat( int fd, char *statement, char *response,
+                     long timeout, char *lineTerm);
+    
+   DESCRIPTION
+     Send a null terminated string ( statement ) to the serial 
+     port and wait for a specific string in return ( response ).
+     The function will wait for the response for up to timeout
+     milliseconds or until a line termination string ( lineTerm )
+     is received ( whichever comes first ).  
+  
+   RETURNS
+     -1 Upon failure
+      0 If a response string was received but doesn't match
+        what was expected.
+      1 If the correct response was received. 
+  
+   NOTE It's not a good idea to logPrint in any
+        of these routines as it may delay time
+        critical operations in the larger program.
+  
+=============================================================
+   NAME
+     serialGetByte - Get a byte from a serial port
+  
+   SYNOPSIS
+     #include "serial.h"
+  
+     int serialGetByte( int fd, char *value, long timeout );
+  
+   DESCRIPTION
+     Get a byte from a serial port.  Wait up to timeout
+     milliseconds before giving up.  Return the byte
+     in the memory pointed to by value.  The file
+     descriptor fd is assumed to be open and ready for
+     reading.
+  
+   RETURNS
+     -1     : If an error occurs ( reason in errno )
+     0 or 1 : The number of bytes retreived upon 
+              successful completion of the operation.
+  
+=============================================================
+   NAME 
+     serialGetData - Read up to nBytes from a serial port.
+  
+   SYNOPSIS
+     #include "serial.h"
+  
+     ssize_t serialGetData( int fd, char *buffer,
+                            long nBytes, long timeout );
+  
+   DESCRIPTION
+     Read up to nBytes from the open file descriptor ( fd ).
+     Waits up to timeout milliseconds before giving up on
+     the read. 
+  
+   RETURNS
+     The number of bytes read or -1 upon failure.
+   
+   NOTE It's not a good idea to logPrint in any
+        of these routines as it may delay time
+        critical operations in the larger program.
+  
+=============================================================
+   NAME
+     serialGetLine - Read a line of data from a serial port
+  
+   SYNOPSIS
+     #include "serial.h"
+  
+     ssize_t serialGetLine( int fd, char *buffer,
+                            long bufsize, long timeout, 
+                            char *lineTerm );
+  
+   DESCRIPTION
+     Read a line of data delimited by the lineTerm string
+     and store in buffer up to bufsize bytes.  This routine 
+     will wait for up to timeout milliseconds for a complete
+     line to be read before returning.   
+  
+   RETURNS
+     -1 : Failure
+     0 to bufsize:  The number of bytes read.  
+     NOTE: This routine may return an incomplete line 
+     if a timeout occurs before the line is read or if
+     the line is longer than bufsize bytes.  Checking
+     for lineTerm string at the end of the buffer is
+     one way of checking for this case.
+  
+   NOTE It's not a good idea to logPrint in any
+        of these routines as it may delay time
+        critical operations in the larger program.
+  
+=============================================================
+   NAME
+     serialPutByte - Write a byte to a serial port
+  
+   SYNOPSIS
+     #include "serial.h"
+  
+     int serialPutByte( int fd, char *value );
+  
+   DESCRIPTION
+     Write a byte pointed to by value to the serial
+     port file descriptor fd.  The file descriptor is
+     assumed to be open and ready for writing.
+  
+   RETURNS
+     0 or 1 : The number of bytes written.
+  
+   NOTE It's not a good idea to logPrint in any
+        of these routines as it may delay time
+        critical operations in the larger program.
+  
+=============================================================
+   NAME
+     serialPutData - Write up to nBytes to a serial port.
+   
+   SYNOPSIS
+     #include "serial.h"
+  
+     ssize_t serialPutData( int fd, char *buffer, long nBytes );
+  
+   DESCRIPTION
+     Write the contents of buffer ( up to nBytes ) to an
+     open file drescriptor ( fd ).  Presumably fd is open
+     to a serial port.  The file descriptor is left
+     unaltered.
+  
+   RESULTS
+     The number of bytes written to the file descriptor.
+   
+=============================================================
+   NAME
+     serialPutLine - Write a null termined line to the serial port.
+  
+   SYNOPSIS
+     #include "serial.h"
+  
+     ssize_t serialPutLine( int fd, char *buffer );
+  
+   DESCRIPTION
+     Write a null terminated ( \0 ) string to the
+     file descriptor ( fd ).  The file descriptor
+     should be previously opened to a serial port.  
+     The file descriptor is not altered in this 
+     function.
+  
+   RETURNS
+     The number of bytes written to the file descriptor.
+   
+   NOTE It's not a good idea to logPrint in any
+        of these routines as it may delay time
+        critical operations in the larger program.
+  
+=============================================================
+   NAME
+     setAquadoppTime - Set the date/time on the Aquadopp 
+  
+   SYNOPSIS
+     #include "aquadopp.h"
+  
+     int setAquadoppTime( int aquadoppFD, struct tm *time );
+  
+   DESCRIPTION
+     Set the date/time on the Aquadopp to
+     the values stored in the UNIX tm format.
+  
+   RETURNS
+      1 Upon success
+     -1 Upon failure
+  
+=============================================================
+   NAME
+     setCTD19PlusTime - Set the date/time on the CTD 19plus
+  
+   SYNOPSIS
+     #include "ctd.h"
+  
+     int setCTD19PlusTime( int ctdFD, struct tm *time );
+  
+   DESCRIPTION
+     Set the date/time on the Seabird CTD 19plus to
+     the values stored in the UNIX tm format.
+  
+   RETURNS
+      1 Upon success
+     -1 Upon failure
+  
+=============================================================
+   NAME
+     setCTD19Time - Set the date/time on the CTD 19
+  
+   SYNOPSIS
+     #include "ctd.h"
+  
+     int setCTD19Time( int ctdFD, struct tm *time );
+  
+   DESCRIPTION
+     Set the date/time on the Seabird CTD 19 to
+     the values stored in the UNIX tm format.
+  
+   RETURNS
+      1 Upon success
+     -1 Upon failure
+  
+=============================================================
+   NAME
+     setOutputLine - Set the state of a SMARTIO output line.
+  
+   SYNOPSIS
+     #include "bitsyxio.h"
+  
+     int setOutputLine( char port, char line, char state );
+  
+   DESCRIPTION
+     Change the state ( 0/1 ) of the output line of a 
+     SMARTIO port.  
+  
+     WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+     ADS has admitted that thier SIO drivers will always
+     return 2 bytes when reading from an SIO port.  This
+     means that the contract made by the UNIX read() system call
+     is broken by them.  If you try to specify size_t of 0 or 
+     1 bytes in read() you will get back 2 bytes!  Make room 
+     for this so that we don't overrun our buffer!  I found this
+     the hard way. 
+     WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+  
+     NOTE: Function used in critical areas...do not log!
+  
+   RETURNS
+     -1 Upon failure
+      1 Upon success
+  
+=============================================================
+   NAME
+     setWSTime - Set the date/time on the weather station.
+  
+   SYNOPSIS
+     #include "weather.h"
+  
+     int setWSTime( int fd, struct tm *time );
+  
+   DESCRIPTION
+     Set the date/time on the Davis weather station to
+     the values stored in the UNIX tm format.
+  
+   RETURNS
+      1 Upon success
+     -1 Upon failure
+  
+=============================================================
+   NAME
+     startHydroLogging - Initiate logging on a hydro wire device
+  
+   SYNOPSIS
+     #include "hydro.h"
+  
+     int startHydroLogging( int hydroDeviceType, int hydroFD );
+  
+   DESCRIPTION
+     At a high level logging of a hydrowire device involves
+     at the minimum streaming of pressure data to the surface.
+     Normally it also involves the capture of numerous types
+     of subsurface data on a datalogger for later download.
+     This routine starts this streaming of data.
+  
+   RETURNS
+     Returns 1 for success and -1 for failure.  The
+     cause of failure is logged at level LVL_WARN.
+  
+=============================================================
+   NAME
+     startLogging - initialize the program logging routines
+  
+   SYNOPSIS
+     #include "log.h"
+   
+     int startLogging( char *fileName, char *name, int dest );
+  
+   DESCRIPTION
+     This routine is used to configure the logging system.
+     It does not strictly need to be called before using 
+     routines like logPrint.  The fileName is opened up
+     for use and stored in the global "logDest" for use
+     by logPrint.  Likewise the program name is stored
+     in a global "progName".  The dest parameter is 
+     used to control the spliting of the logPrint
+     messages to the logFile, the screen or both ( see
+     log.h for valid settings for this parameter ).
+    
+   RETURNS
+     1 on Success
+    -1 on Failure
+  
+=============================================================
+   NAME
+     startLoggingAquadopp - Initiate Aquadopp logging
+  
+   SYNOPSIS
+     #include "aquadopp.h"
+  
+     int startLoggingAquadopp( int aquadoppFD );
+  
+   DESCRIPTION
+     Initiate Nortek Aquadopp logging through the use of the
+     "SD" command.
+  
+   RETURNS
+     Returns 1 for success and -1 for failure.  The
+     cause of failure is logged at level LVL_WARN.
+  
+=============================================================
+   NAME
+     startLoggingCTD19 - Initiate CTD logging and pressure output
+  
+   SYNOPSIS
+     #include "ctd.h"
+  
+     int startLoggingCTD19( int ctdFD );
+  
+   DESCRIPTION
+     Initiate Seabird CTD 19 logging through the use of the
+     Go Log "gl" command.
+  
+   RETURNS
+     Returns 1 for success and -1 for failure.  The
+     cause of failure is logged at level LVL_WARN.
+  
+=============================================================
+   NAME
+     startLoggingCTD19Plus - Initiate CTD logging and pressure output
+  
+   SYNOPSIS
+     #include "ctd.h"
+  
+     int startLoggingCTD19Plus( int ctdFD );
+  
+   DESCRIPTION
+     Initiate Seabird CTD 19+ logging through the use of the
+     Go Log "STARTNOW" command.
+  
+   RETURNS
+     Returns 1 for success and -1 for failure.  The
+     cause of failure is logged at level LVL_WARN.
+  
+=============================================================
+   NAME
+     stopHydroLogging - Cease logging of hydrowire device
+  
+   SYNOPSIS
+     #include "hydro.h"
+  
+     int stopHydroLogging( int hydroDeviceType, int hydroFD );
+  
+   DESCRIPTION
+     At a high level logging of a hydrowire device involves
+     at the minimum streaming of pressure data to the surface.
+     Normally it also involves the capture of numerous types
+     of subsurface data on a datalogger for later download.
+     This routine stops this streaming of data.
+  
+   RETURNS
+     Returns 1 for success and -1 for failure.  The
+     cause of failure is logged at level LVL_WARN.
+  
+=============================================================
+   NAME
+     stopLoggingAquadopp - Cease Aquadopp logging
+  
+   SYNOPSIS
+     #include "aquadopp.h"
+  
+     int stopLoggingAquadopp( int aquadoppFD );
+  
+   DESCRIPTION
+     Cease Nortek Aquadopp logging. This is accomplished
+     by entering command mode.
+  
+   RETURNS
+     Returns 1 for success and -1 for failure. 
+  
+=============================================================
+   NAME
+     stopLoggingCTD19 - Cease CTD logging and pressure output
+  
+   SYNOPSIS
+     #include "ctd.h"
+  
+     int stopLoggingCTD19( int ctdFD );
+  
+   DESCRIPTION
+     Cease Seabird CTD 19 logging by sending a CTRL-Z
+     to the CTD.  NOTE: The use of CTRL-Z may be
+     specific to the UW's version of the CTD 19.
+  
+   RETURNS
+     Returns 1 for success and -1 for failure.  The
+     cause of failure is logged at level LVL_WARN.
+  
+=============================================================
+   NAME
+     stopLoggingCTD19Plus - Cease CTD logging and pressure output
+  
+   SYNOPSIS
+     #include "ctd.h"
+  
+     int stopLoggingCTD19Plus( int ctdFD );
+  
+   DESCRIPTION
+     Cease Seabird CTD 19+ logging by issueing a STOP
+     command.  This routine is really a wrapper for the
+     getCTD19PlusSPrompt() routine.  This is to preserve
+     the interface that was used for the CTD 19 code which
+     has a more complicated stop procedure.
+  
+   RETURNS
+     Returns 1 for success and -1 for failure.  The
+     cause of failure is logged at level LVL_WARN.
+  
+=============================================================
+   NAME
+     syncHydroTime - Sync date and time on the CTD with our time.
+  
+   SYNOPSIS
+     #include "ctd.h"
+  
+   DESCRIPTION
+     Sync a Seabird CTD to the system date and time.
+  
+   RETURNS
+     1 Upon success
+    -1 Upon failure
+  
+=============================================================
+   NAME
+     syncWSTime - Sync date and time on the weather station with our time.
+    
+   SYNOPSIS
+     #include "weather.h"
+  
+   DESCRIPTION
+     Sync a Davis weather station to the system date and time.  
+  
+   RETURNS
+     1 Upon success
+    -1 Upon failure
+  
+=============================================================
+   NAME
+     tokenizeConfigLine - Attempt to break a config line into 1 or 2 tokens.
+  
+   SYNOPSIS
+     #include "parser.h"
+  
+     int tokenizeConfigLine ( char *buffer, char **name, char **value );
+     
+   DESCRIPTION
+     Read character buffer and attempt to tokenize the line into
+     either a name token or a name and value tokens.  A config
+     file line may be:
+  
+                   : Blank...no tokens generated
+       # Blah Blah : A comment line
+       [foo]       : A name token of "foo" only
+       foo = bar   : A name/value token "foo"/"bar"
+  
+   RETURNS
+     The number of tokens generated or -1 if an error 
+     occured.
+  
+=============================================================
+   NAME
+     updateDataDir - Create a new data directory if necessary.
+  
+   SYNOPSIS
+      #include "util.h"
+  
+      int updateDataDir();
+  
+   DESCRIPTION
+     This routine uses the global opts.dataDirName to locate
+     the top-level data storage directory for the program.  Data
+     files are organized into subfolders, one per year-month 
+     ( yyyymm name format ).  The current in-use subdirectory name
+     ( i.e. /usr/local/orcaD/data/200501 ) is saved in the global
+     opts.dataSubDirName.  This routine checks that the current
+     year-month folder exists and if not creates it.
+  
+   RETURNS
+      1   :  Success
+     -1   :  Failure
+  
+=============================================================
+   NAME
+     writeLastCastInfo - Write the last cast index to a file.
+  
+   SYNOPSIS
+     #include "util.h"
+  
+     int writeLastCastInfo( long castIdx );
+  
+   DESCRIPTION
+     Write the number of the last cast index used to a file.
+     The file name is stored in the global parameter 
+     opts.dataDirName/CASTIDXFILE.
+  
+   RETURNS
+     1 Upon success
+    -1 Upon failure
+  

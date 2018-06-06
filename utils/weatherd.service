@@ -1,0 +1,11 @@
+[Unit]
+Description=weatherD Daemon
+
+[Service]
+ExecStart=/usr/local/orcaD/weatherd -f
+Restart=always
+StandardOutput=null
+
+[Install]
+WantedBy=muti-user.target
+Alias=weatherd.service

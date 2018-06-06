@@ -1,0 +1,2 @@
+/* GNU ld script.  */
+GROUP ( /lib/arm-linux-gnueabihf/libusb-0.1.so.4.4.4 )

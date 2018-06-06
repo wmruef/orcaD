@@ -1,0 +1,325 @@
+
+orcaD Test Plan #2
+==================
+
+Initial Preparations:
+
+  - Remove any old logs which may be left from running
+    the programs before the test:
+
+       % cd /usr/local/orcaD/logs
+       % rm orcad orcactrl
+       % cd ../data/
+
+    Make sure you are in the correct directory:
+       % pwd
+       /usr/local/orcaD/data
+
+    And Run:
+       % rm -rf * 
+     
+
+TEST #1 -- Killing orcactrl in critical loop
+
+ - Attach bitsyX to the batteries, meterwheel and winch.
+
+  1. Boot the computer and change into orcaD directory
+        % cd /usr/local/orcaD
+
+  2. Move package down to 90 meters by running orcactrl
+     in the background.
+
+        % ./orcactrl -d 8 move down 90 &
+
+  3. Send orcactrl the HUP signal once the winch
+     starts moving:
+
+        <LOTS OF STUFF PRINTING TO SCREEN> 
+
+     Hit return and type "jobs" and hit return again
+
+        % jobs
+
+     In between all the output of the program you
+     should see something like:
+
+        [1]+  Running       ./orcactrl move down 90
+
+      
+      Hit return and type "kill -HUP %1" and hit return
+
+        % kill -HUP %1
+
+      You should see something like this appear in the
+      output **and** the screen output should stop.
+
+        [1]    Hangup       ./orcactrl move down 90 
+
+      The winch should have also shut off.  If not
+      Simply type ./iotest WINCHPWR OFF
+
+  4. Place the package back at parking depth:
+
+       % ./orcactrl move up 20
+
+
+
+TEST #2 -- Killing orcad in critical loop
+
+  1. Configure the program to run a profile automatically
+     and start the orca daemon "orcad".  Again for
+     safety sake have someone on the winch controls
+     should something go wrong:
+
+     Figure out a good run time:
+
+        % date
+        Tue Oct 4 09:17:23 PDT 2005
+
+     Add about 10 minutes to this time ( ie. 9:27 ) 
+     and enter it into the config file:
+
+        % nano /usr/local/orcaD/orcad.cfg
+
+     Move down in the file to the mission list and locate
+     the "Deep_Cast_Direct" mission:
+
+        [Deep_Cast_Direct]
+          schedule = 0 0 * Jan *
+          cycles = 1.5
+          equilibration_time = 20
+
+     Change the schedule to your desired run time and
+     turn the month field to "*":
+
+          schedule = 27 9 * * *
+
+     Save the file and exit the editor.  
+
+  2. Startup the orcad program:
+
+        % cd /usr/local/orcaD
+        % ./orcad -d 8 
+
+  3. Check that the program started up correctly:
+
+     Look for orcad in the process listing:
+        % ps -e | grep orcad
+        #### ?        00:00:00 orcad
+
+     Note the number in the first column.  This is
+     the process ID of orcad.  You will use it later
+     on to kill the daemon.
+
+     Read the log file:
+
+        % more /usr/local/orcaD/logs/orcad
+
+     If all went well this file should contain
+     the line:
+    
+        ##/##/## ##:##:##: orcad: Main schedule loop starting
+
+     See how much time you have left before the profile
+     starts:
+  
+        % date
+        Tue Oct 4 09:24:23 PDT 2005
+
+  4. Kill the daemon once the winch starts the **downcast**.
+
+        % kill -HUP ####
+
+     Use the number from the "ps" command above in the place
+     of the "####"s.  The winch should stop moving.  If it 
+     doesn't then simply run:
+
+        % ./iotest WINCHPWR OFF
+
+     NOTE: If you think you will not be able to kill the
+           daemon before it automatically stops at parking
+           depth then wait for the downcast which gives
+           you plenty of time to kill the daemon.
+
+
+  5. Place the package back at parking depth:
+
+       % ./orcactrl view pressure
+     
+     Depending on the current depth of the
+     package move it up or down to 20 meters:
+
+       % ./orcactrl move ??? 20
+
+
+
+
+TEST #3 -- Killing orcad in critical loop whith autostart
+
+  1. Configure the program to run a profile automatically
+     and start the orca daemon "orcad".  Again for
+     safety sake have someone on the winch controls
+     should something go wrong:
+
+     Figure out a good run time:
+
+        % date
+        Tue Oct 4 09:17:23 PDT 2005
+
+     Add about 15 minutes to this time ( ie. 9:32 ) 
+     and enter it into the config file:
+
+        % nano /usr/local/orcaD/orcad.cfg
+
+     Move down in the file to the mission list and locate
+     the "Deep_Cast_Direct" mission:
+
+        [Deep_Cast_Direct]
+          schedule = 0 0 * Jan *
+          cycles = 1.5
+          equilibration_time = 20
+
+     Change the schedule to your desired run time and
+     turn the month field to "*":
+
+          schedule = 32 9 * * *
+
+     Save the file and exit the editor.  
+
+  2. Edit the init daemon's configuration file /etc/inittab and
+     add orcad to it's list of managed processes:
+
+        % nano /etc/inittab
+
+      Go to the bottom of the file and add or uncomment:
+
+        # Run orcad in runlevel 3
+        od:3:respawn:/usr/local/orcaD/orcad -d 8 -f
+
+
+  3. Tell the init daemon to re-read the /etc/inittab file:
+
+        % /sbin/telinit q
+
+  4. Check that the program started up correctly:
+
+     Look for orcad in the process listing:
+        % ps -e | grep orcad
+        #### ?        00:00:00 orcad
+
+     Note the number in the first column.  This is
+     the process ID of orcad.  You will use it later
+     on to kill the daemon.
+
+     Read the log file:
+
+        % more /usr/local/orcaD/logs/orcad
+
+     If all went well this file should contain
+     the line:
+    
+        ##/##/## ##:##:##: orcad: Main schedule loop starting
+
+     See how much time you have left before the profile
+     starts:
+  
+        % date
+        Tue Oct 4 09:24:23 PDT 2005
+
+  5. Kill the daemon once the winch starts the downcast.
+     This time simulate a bad crash using the "-9" signal:
+
+        % kill -9 ####
+
+     Use the number from the "ps" command above in the place
+     of the "####"s.  The winch should stop moving.  If it 
+     doesn't then stop the winch manually using the
+     auto/manual switch on the buoy.
+
+  6. Check that the program restarted automatically:
+
+     Look for orcad in the process listing:
+        % ps -e | grep orcad
+        #### ?        00:00:00 orcad
+
+  7. Disable autostart:
+   
+        % nano /etc/inittab
+
+     Go to the bottom of the file and comment out:
+     
+        # Run orcad in runlevel 3
+        #od:3:respawn:/usr/local/orcaD/orcad -d 8 -f
+
+     Exit the editor and tell the "init" daemon to re-read
+     the file:
+
+       % /sbin/telinit q
+
+  8. Kill orcad:
+ 
+        % ps -e | grep orcad
+        #### ?        00:00:00 orcad
+        % kill -HUP ####
+   
+  9. Check that its gone:
+
+        % ps -e | grep orcad
+        %
+
+
+SETUP FOR WEEK LONG TEST:
+
+  1. Reboot the computer
+  
+       % halt
+       
+     Power cycle.
+
+  2. Edit the /usr/local/orcaD/orcad.cfg file and set 
+     run parameters and missions
+
+  3. Rename old testing logs 
+
+       % cd /usr/local/orcaD/logs
+       % mv orcad orcad.testplan2
+       % mv orcactrl orcactrl.testplan2
+
+     Remove old data files:
+
+       % cd ../data
+       % pwd
+       /usr/local/orcaD/data
+       % rm -rf *
+
+  4. Move to parking depth:
+
+       % cd /usr/local/orcaD
+       % ./orcactrl view pressure
+       % ./orcactrl move ??? 20
+
+  5. Check that config is correct:
+
+       % ./orcactrl view config
+
+  6. Edit the init daemon's configuration file /etc/inittab and
+     add orcad to it's list of managed processes:
+
+        % nano /etc/inittab
+
+     Go to the bottom of the file and add or uncomment:
+
+        # Run orcad in runlevel 3
+        od:3:respawn:/usr/local/orcaD/orcad -d 8 -f
+  
+     Save and exit the editor.  Tell the init daemon to 
+     re-read the /etc/inittab file:
+
+        % /sbin/telinit q
+
+  7. Check that orcad has been started:
+
+        % ps -e | grep orcad
+        #### ?        00:00:00 orcad
+
+  8. Go home!
