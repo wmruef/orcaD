@@ -151,7 +151,7 @@ int syncAquadoppTime( int aquadoppFD )
     if ( setAquadoppTime( aquadoppFD, now_tm ) < 0 )
     {
       LOGPRINT( LVL_ALRT, "syncAquadoppTime(): Could not set the aquadopp time!" );
-      return( FAILURE );
+      //return( FAILURE );
     }
 
     // Get the system time
@@ -174,7 +174,7 @@ int syncAquadoppTime( int aquadoppFD )
       LOGPRINT( LVL_ALRT, "syncAquadoppTime(): After attempting to set the "
                 "aquadopp time we are still off by %d seconds!  Failed to set "
                 "the time correctly!", ( was_t - now_t ) );
-      return( FAILURE );
+      //return( FAILURE );
     }
   }
 
@@ -206,6 +206,7 @@ int getAquadoppPrompt ( int aquadoppFD )
   char buffer[256];
   int retries = 0;
   int atPrompt = 0;
+  int bufSize = 0;
 
   // Say hello
   LOGPRINT( LVL_VERB, "getAquadoppPrompt(): Called" );
@@ -244,18 +245,23 @@ int getAquadoppPrompt ( int aquadoppFD )
     usleep( 100 );
     // Send the break suffix
     serialPutLine( aquadoppFD, "K1W%!Q" );
+
+    static const char CONFIRM_PRMPT[] = "Confirm:";
+    static const char COMMAND_PRMPT[] = "Command mode";
   
     // Wait for response
-    if ( serialGetLine( aquadoppFD, buffer, 256, 500, dblAck ) >= 0 ) 
+    if ( (bufSize = serialGetLine( aquadoppFD, buffer, 256, 500, dblAck )) >= 0 )
     {
-      if( strstr( buffer, "Confirm:" ) ) 
+      //if( strstr( buffer, "Confirm:" ) ) 
+      if( memmem( buffer, bufSize, CONFIRM_PRMPT, strlen(CONFIRM_PRMPT) ) ) 
       {
         // Send the confirmation
         serialPutLine( aquadoppFD, "MC" );
         // Wait for response
-        if ( serialGetLine( aquadoppFD, buffer, 256, 500, dblAck ) >= 0 ) 
+        if ( (bufSize = serialGetLine( aquadoppFD, buffer, 256, 500, dblAck )) >= 0 ) 
         {
-          if ( strstr( buffer, "Command mode" ) ) 
+          //if ( strstr( buffer, "Command mode" ) ) 
+          if ( memmem( buffer, bufSize, COMMAND_PRMPT, strlen(COMMAND_PRMPT) ) ) 
           {
             atPrompt = 1;
           }else
@@ -266,7 +272,8 @@ int getAquadoppPrompt ( int aquadoppFD )
         {
           // Could not get a response with a double ACK - Bad
         }
-      }else if ( strstr( buffer, "Command mode" ) ) 
+      //}else if ( strstr( buffer, "Command mode" ) ) 
+      }else if ( memmem( buffer, bufSize, COMMAND_PRMPT, strlen(COMMAND_PRMPT) ) ) 
       {
         atPrompt = 1;
       }else 
@@ -411,10 +418,17 @@ struct tm *getAquadoppTime ( int aquadoppFD )
   }
 
   // Send the RC command to obtain the BCD encoded time/date data
+//       ! ( bytesRead == 10 && dataBuff[0] == 0x52 && dataBuff[1] == 0x43 && 
   serialPutLine( aquadoppFD, "RC" );
-  if ( ( bytesRead = serialGetData( aquadoppFD, dataBuff, 12, 6000L ) ) != 8 
-       || ( dataBuff[6] != 0x06 && dataBuff[7] != 0x06 ) )
+  bytesRead = serialGetData( aquadoppFD, dataBuff, 12, 6000L );
+  if ( ! ( bytesRead == 8 && dataBuff[6] == 0x06 && dataBuff[7] == 0x06 ) &&
+       ! ( bytesRead == 10&& dataBuff[8] == 0x06 && dataBuff[9] == 0x06) )
   {
+    int v;
+    for ( v = 0; v < bytesRead; v++ )
+    {
+      printf("RC - dataBuff[%d] = %d\n", v, dataBuff[v] );
+    }
     LOGPRINT( LVL_WARN, "getAquadoppTime(): Did not get a "
               "complete response to the RC command bytesRead=%d", bytesRead );
     for ( i = 0; i < bytesRead; i++ )
@@ -425,17 +439,21 @@ struct tm *getAquadoppTime ( int aquadoppFD )
     return( (struct tm *)NULL );
   }
 
-  LOGPRINT( LVL_DEBG, "getAquadoppTime(): dataBuff[0-5]: %d %d %d %d %d %d", 
-            dataBuff[0], dataBuff[1], dataBuff[2], dataBuff[3],
-            dataBuff[4], dataBuff[5] );
+  char *dataBuffPtr = &dataBuff[0];
+  if ( bytesRead  == 10 )
+    dataBuffPtr = &dataBuff[2];
+ 
+  LOGPRINT( LVL_DEBG, "getAquadoppTime(): dataBuffPtr[0-5]: %d %d %d %d %d %d", 
+            dataBuffPtr[0], dataBuffPtr[1], dataBuffPtr[2], dataBuffPtr[3],
+            dataBuffPtr[4], dataBuffPtr[5] );
 
   // Setup the data structure
-  aquadoppTime.tm_sec  = bcdToDec( dataBuff[1] ); 
-  aquadoppTime.tm_min  = bcdToDec( dataBuff[0] ); 
-  aquadoppTime.tm_hour = bcdToDec( dataBuff[3] ); 
-  aquadoppTime.tm_mday = bcdToDec( dataBuff[2] ); 
-  aquadoppTime.tm_mon  = bcdToDec( dataBuff[5] ) - 1; 
-  aquadoppTime.tm_year = bcdToDec( dataBuff[4] ) + 100; 
+  aquadoppTime.tm_min  = bcdToDec( dataBuffPtr[0] ); 
+  aquadoppTime.tm_sec  = bcdToDec( dataBuffPtr[1] ); 
+  aquadoppTime.tm_mday = bcdToDec( dataBuffPtr[2] ); 
+  aquadoppTime.tm_hour = bcdToDec( dataBuffPtr[3] ); 
+  aquadoppTime.tm_year = bcdToDec( dataBuffPtr[4] ) + 100; 
+  aquadoppTime.tm_mon  = bcdToDec( dataBuffPtr[5] ) - 1; 
   aquadoppTime.tm_isdst = -1;
 
   LOGPRINT( LVL_DEBG, "getAquadoppTime(): Time: %s", asctime( &aquadoppTime ));
@@ -472,21 +490,28 @@ int setAquadoppTime ( int aquadoppFD, struct tm *time ) {
   }
 
   // Setup the data structure
-  dataBuff[0] = decToBCD( time->tm_min ); 
-  dataBuff[1] = decToBCD( time->tm_sec ); 
-  dataBuff[2] = decToBCD( time->tm_mday ); 
-  dataBuff[3] = decToBCD( time->tm_hour ); 
-  dataBuff[4] = decToBCD( time->tm_year - 100 ); 
-  dataBuff[5] = decToBCD( time->tm_mon + 1 ); 
-  dataBuff[6] = 0x00; 
+  // NOTE: We have noticed that the Aquadopp is very picky about the timing
+  // of the transmission of command bytes.  If we called:
+  //     serialPutLine( aquadoppFD, "SC" );
+  // and then 
+  //     serialPutData( aquadoppFD, dataBuff, 6 );
+  // the delay between the SC and the parameter data is enough to 
+  // confuse the Aquadopp. It does seem to work reliably if you 
+  // send all the data at once though:
+  dataBuff[0] = 'S';
+  dataBuff[1] = 'C';
+  dataBuff[2] = decToBCD( time->tm_min ); 
+  dataBuff[3] = decToBCD( time->tm_sec ); 
+  dataBuff[4] = decToBCD( time->tm_mday ); 
+  dataBuff[5] = decToBCD( time->tm_hour ); 
+  dataBuff[6] = decToBCD( time->tm_year - 100 ); 
+  dataBuff[7] = decToBCD( time->tm_mon + 1 ); 
+  dataBuff[8] = 0x00; 
 
-  LOGPRINT( LVL_DEBG, "setAquadoppTime(): dataBuff[0-5]: %d %d %d %d %d %d", dataBuff[0], dataBuff[1], dataBuff[2], dataBuff[3], dataBuff[4], dataBuff[5] );
+  LOGPRINT( LVL_DEBG, "setAquadoppTime(): dataBuff[0-5]: %d %d %d %d %d %d", dataBuff[2], dataBuff[3], dataBuff[4], dataBuff[5], dataBuff[6], dataBuff[7] );
 
-  serialPutLine( aquadoppFD, "SC" );
-  //serialPutByte( aquadoppFD, 0x43 );
-  //serialPutByte( aquadoppFD, 0x52 );
-  serialPutData( aquadoppFD, dataBuff, 6 );
-  if ( serialChat( aquadoppFD, "", dblAck, 2500L, dblAck ) < 1 ) 
+  serialPutData( aquadoppFD, dataBuff, 8 );
+  if ( serialChat( aquadoppFD, "", dblAck, 5000L, dblAck ) < 1 ) 
   {
     LOGPRINT( LVL_WARN, "setAquadoppTime(): Failed sending "
               "SC command and data!" );
@@ -536,8 +561,14 @@ int displayAquadoppConfig ( int aquadoppFD ) {
 
 
   serialPutLine( aquadoppFD, "GA" );
-  if ( ( bytesRead = serialGetData( aquadoppFD, dataBuff, 784, 6000L ) ) != 784 
-       || ( dataBuff[0] != 0xA5 && dataBuff[1] != 0x05 ) )
+  bytesRead = serialGetData( aquadoppFD, dataBuff, 784, 6000L );
+  
+  // Newer aquadopps appear to echo the command in the response
+  char *dataBuffPtr = &dataBuff[0];
+  if ( dataBuff[0] == 'G' && dataBuff[1] == 'A' )
+    dataBuffPtr = &dataBuff[2];
+
+  if ( bytesRead != 784 || ( dataBuffPtr[0] != 0xA5 && dataBuffPtr[1] != 0x05 ) )
   {
     LOGPRINT( LVL_WARN, "displayAquadoppConfig(): Did not get a "
               "complete response to the GA command bytesRead=%d", bytesRead );
@@ -550,10 +581,10 @@ int displayAquadoppConfig ( int aquadoppFD ) {
   }
 
   // Cast the buffer to the data structures
-  hardwareRec = (struct hardwareConfig *)&(dataBuff);
+  hardwareRec = (struct hardwareConfig *)(dataBuffPtr);
   // Unused at this time
   //headRec = (struct headConfig *)&(dataBuff[48]);
-  userRec = (struct userConfig *)&(dataBuff[272]);
+  userRec = (struct userConfig *)&(dataBuffPtr[272]);
 
   aquadoppTime.tm_sec  = bcdToDec( userRec->clockDeploy[1] ); 
   aquadoppTime.tm_min  = bcdToDec( userRec->clockDeploy[0] ); 
@@ -620,7 +651,6 @@ int displayAquadoppFAT ( int aquadoppFD )
     return( FAILURE );
   }
 
-
   serialPutLine( aquadoppFD, "RF" );
   if ( serialGetLine( aquadoppFD, (char *)buffer, 
                       sizeof( struct aquadoppFAT ) * 32, 
@@ -677,29 +707,29 @@ int clearAquadoppFAT ( int aquadoppFD )
     return( FAILURE );
   }
 
-  // Format the archive ( "FO" command )
   term_flush( aquadoppFD );
-  serialPutByte( aquadoppFD, 0x46 );
-  serialPutByte( aquadoppFD, 0x4f );
-  serialPutByte( aquadoppFD, 0x12 );
-  serialPutByte( aquadoppFD, 0xd4 );
-  serialPutByte( aquadoppFD, 0x1e );
-  serialPutByte( aquadoppFD, 0xef );
+  // Command to erase the recorder ( easier on the CF memory than format )
+  static char FO_Erase[] = { 0x46, 0x4f, 0x12, 0xd4, 0x1e, 0xef, 0x00 };
+  // Command to format the recorder
+  //static char FO_Format[] = { 0x46, 0x4f, 0x4d, 0x52, 0x54, 0x41, 0x00 };
 
-  if ( ( bytesRead = serialGetData( aquadoppFD, fileBuff, 128, 5000L ) ) > 0 )
+  serialPutLine( aquadoppFD, FO_Erase );
+
+  if (( bytesRead = serialGetLine( aquadoppFD, fileBuff, 128, 20000L, dblAck )) > 0 )
   {
     if ( ! memmem( fileBuff, bytesRead, dblAck, 2 ) )
     {
       LOGPRINT( LVL_WARN, "clearAquadoppFAT(): Failed sending "
-                          "FO (format) command and data! Missing dblAck "
+                          "FO (erase) command and data! Missing dblAck "
                           "in response!" );
       return( FAILURE );
     } 
   }else {
     LOGPRINT( LVL_WARN, "clearAquadoppFAT(): Failed sending "
-                        "FO (format) command and data! Missing response!" );
+                        "FO (erase) command and data! Missing response!" );
     return( FAILURE );
   }
+
   return ( SUCCESS );
 }
 
@@ -749,21 +779,6 @@ int downloadAquadoppFiles ( int aquadoppFD )
                       sizeof( struct aquadoppFAT ) * 32, 
                       500, dblAck ) >= 0 ) 
   {
-
-      LOGPRINT( LVL_DEBG, "downloadAquadoppFiles(): filename = %s seq=%x status=%x "
-                " start= %x-%x-%x-%x end= %x-%x-%x-%x",
-                buffer[ FATIndex ].filenamePrefix, 
-                buffer[ FATIndex ].filenameSeq,
-                buffer[ FATIndex ].status,
-                buffer[ FATIndex ].startAddress[0],
-                buffer[ FATIndex ].startAddress[1],
-                buffer[ FATIndex ].startAddress[2],
-                buffer[ FATIndex ].startAddress[3],
-                buffer[ FATIndex ].stopAddress[0], 
-                buffer[ FATIndex ].stopAddress[1], 
-                buffer[ FATIndex ].stopAddress[2], 
-                buffer[ FATIndex ].stopAddress[3] );
- 
     while ( buffer[ FATIndex ].filenamePrefix[0] != '\0' )
     {
       LOGPRINT( LVL_DEBG, "downloadAquadoppFiles(): filename = %s seq=%x status=%x "
@@ -821,7 +836,6 @@ int downloadAquadoppFiles ( int aquadoppFD )
 
       LOGPRINT( LVL_DEBG, "downloadAquadoppFiles: Saving configuration " 
                           "data.. " );
-
 
       // Clear the port
       term_flush( aquadoppFD );
@@ -902,27 +916,11 @@ int downloadAquadoppFiles ( int aquadoppFD )
     return( FAILURE );
   }
 
-  // Format the archive ( "FO" command )
-  term_flush( aquadoppFD );
-  serialPutByte( aquadoppFD, 0x46 );
-  serialPutByte( aquadoppFD, 0x4f );
-  serialPutByte( aquadoppFD, 0x12 );
-  serialPutByte( aquadoppFD, 0xd4 );
-  serialPutByte( aquadoppFD, 0x1e );
-  serialPutByte( aquadoppFD, 0xef );
-
-  if ( ( bytesRead = serialGetData( aquadoppFD, fileBuff, 128, 5000L ) ) > 0 )
+  if ( clearAquadoppFAT( aquadoppFD ) < 1 )
   {
-    if ( ! memmem( fileBuff, bytesRead, dblAck, 2 ) )
-    {
-      LOGPRINT( LVL_WARN, "downloadAquadoppFiles(): Failed sending "
-                          "FO (format) command and data! Missing dblAck "
-                          "in response!" );
-      return( FAILURE );
-    } 
-  }else {
-    LOGPRINT( LVL_WARN, "downloadAquadoppFiles(): Failed sending "
-                        "FO (format) command and data! Missing response!" );
+    // All attempts at obtaining a command prompt failed 
+    LOGPRINT( LVL_WARN, "downloadAquadoppFiles(): Failed to erase "
+              "the aquadopp archive." );
     return( FAILURE );
   }
 
@@ -933,9 +931,7 @@ int downloadAquadoppFiles ( int aquadoppFD )
       LOGPRINT( LVL_WARN, "downloadAquadoppFiles(): Warning! Failed "
                 "to write PD ( power down ) command to Aquadopp!");
     }
-  
  
   return( SUCCESS );
-
 }
  

@@ -26,7 +26,7 @@
 #    4. Run: make distclean
 #
 # Set the version here
-VERSION = 0.9.8
+VERSION = 0.9.9
 
 # Set the installation directories here
 #
@@ -279,8 +279,7 @@ distfile: all
 	-mkdir dist/orcaD/data
 	-mkdir dist/orcaD/logs
 	-mkdir dist/orcaD/utils
-	$(INSTALL) README dist/orcaD
-	$(INSTALL) UWMANUAL dist/orcaD
+	$(INSTALL) README.md dist/orcaD
 	$(INSTALL) orcad dist/orcaD
 	$(INSTALL) weatherd dist/orcaD
 	$(INSTALL) orcactrl dist/orcaD
@@ -302,18 +301,6 @@ distribution: distfile
 	cp dist/orcaD-$(VERSION)-$(PLATFORM).tar.gz ..
 	make distclean
 	(cd ..; tar zcvf orcaD-src-$(VERSION).tar.gz orcaD)
-#	-scp ../orcaD-$(VERSION)-$(PLATFORM).tar.gz orca@orcabase.ocean.washington.edu:orcaD
-#	-scp ../orcaD-src-$(VERSION).tar.gz orca@orcabase.ocean.washington.edu:orcaD
-
-#	-scp ../orcaD-$(VERSION)-$(PLATFORM).tar.gz rhubley@209.124.189.31:
-#	-scp ../orcaD-src-$(VERSION).tar.gz rhubley@209.124.189.31:
-
-
-
 
 backup:
 	cd ..; tar zcvf orcaD-rpi-backup.tar.gz orcaD/
-	scp ../orcaD-rpi-backup.tar.gz orca@orcabase.ocean.washington.edu:orcaD
-
-
-

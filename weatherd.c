@@ -355,7 +355,8 @@ int wsMonitor( )
   int compassDir = 0;
   int windCompass = 0;
   float PARumolPerMeterSquared = 0.0;
-  double math_degT, rad, u_mean, v_mean, NEWmag, NEWrad, NEW_degT;
+  double math_degT, rad, u_mean, v_mean, NEWrad, NEW_degT;
+  double NEWmag = 0;
   float windVectorUTotal = -1;
   float windVectorVTotal = -1;
   char *fileHeader = NULL;

@@ -1,12 +1,22 @@
 
-                  ORCA Control and Management Software
+# ORCA Control and Management Software
                     
-
-            Written by Robert Hubley & Wendi Ruef ( July 2005 )
+## Written by Robert Hubley & Wendi Ruef ( July 2005 )
 
 
 Overview
 ========
+The Oceanic Remote Chemical Analyzer (ORCA) is an autonomous 
+moored profiling system providing real-time data streams of
+water and atmospheric conditions. It consists of a profiling 
+underwater sensor package with a variety of chemical and 
+optical sensors, and a surface mounted weather station, 
+solar power system, winch, and custom computer and software 
+package equipped with WIFI/cellular communication.
+
+The ORCA buoy controller Daemon (orcaD) is a UNIX server deamon
+and utilities which autonomously operate the mechanical systems
+of the buoy. 
 
 Design Concepts
 ===============
@@ -28,7 +38,6 @@ Design Concepts
        increase it's robustness.
 
     3. Allow for easy reconfiguration of intruments.
-
 
  
 Installation
@@ -70,7 +79,6 @@ Installation
         % ls
         data/  iotest*  logs/  orcactrl*  orcad* orcad.cfg.tmpl readme
         utils/ 
-
 
   Installing From A Source Software Distribution:
 
@@ -116,7 +124,7 @@ Manual Operations
 =================
 
   The orcactrl program is used to manually operate the buoy
-  systems when the automated program ( orcad ) is *NOT* running.
+  systems when the automated program ( orcaD ) is *NOT* running.
   It is very important not to run both simultaneously. 
 
   Orcactrl may be run as a command driven shell or as a
@@ -168,10 +176,10 @@ Automated Operation
   Orcad is configured through the use of a config
   file ( defaults to /usr/local/orcaD/orcad.cfg )
   and is started by the operating system process
-  management program "init" (see installation section
-  for details).  Init has the ability to not only 
-  start a program when the system is booted, but to
-  also restart it should it automatically should it
+  management program "init" or systemd (see installation 
+  section for details).  Init/systemd has the ability 
+  to not only start a program when the system is booted,
+  but to also restart it should it automatically should it
   crash at any time.  It is important that orcad
   is started in this fashion as it offers some amount
   of insurance that the winch will be shut off should
@@ -214,7 +222,6 @@ Automated Operation
         9. Close all the files
        10. exit the program.
               
-
 
 PROCEDURES
 ==========
@@ -561,7 +568,20 @@ New settings for 19+V2
    biowiper=n
    outputexecutedtag=n
 ------
- 0 9 8 - pifilling.c : Fixed a potential deadlock situation in the getADValue()
+
+ 0.9.9 - orcad.c     : Sync the CTD time with the computer time at the end
+                       of every cast.
+         aquadopp.c  : Fixed many communication problems that emerged after
+                       firmware updates. It appears that the undocumented
+                       recorder commands for obtaining file data leave the
+                       Aquadopp in a non-command state. Now obtaining the
+                       command prompt before trying to send erase command.
+                       It also appears that the timing of sending commands
+                       is sensitive.  It works best if we formulate the 
+                       command and paramters and send in one transmit 
+                       call rather than several calls.
+
+ 0.9.8 - pifilling.c : Fixed a potential deadlock situation in the getADValue()
                        code.  We found that some PIFilling boards (v0.3 batch) 
                        have a bad ADC chip ( ports 0-3 ).  The chip reports back
                        a "9c" status when the configuration register is read. The

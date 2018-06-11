@@ -499,14 +499,23 @@ int runJobs ( struct mission *mPtr )
 
       nJobs++;
       currMission->cl_Pid = 0;
- 
+
+      //
+      // Sync the time with the CTD just for good measure
+      //
+      hydroDeviceType = getHydroWireDeviceType();
+      hydroFD = getDeviceFileDescriptor( hydroDeviceType );
+      if ( syncHydroTime( hydroDeviceType, hydroFD ) < 0 )
+      {
+        LOGPRINT( LVL_ALRT, "runJobs(): Failed to sync CTD time!" );
+      }
+
       // WMR 10/16/13: Toggle hydro wire power off. Now that the buoy's
       //               no longer have battery packs underwater we only
       //               need to power up the hydrowire during a profile.
       HYDRO_OFF;      
       LOGPRINT( LVL_INFO,
               "profile(): Powering off the hydrowire.");
-
 
       LOGPRINT( LVL_NOTC, "runJobs(): Completed mission: %s\n", 
                           currMission->name);
