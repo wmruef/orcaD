@@ -568,6 +568,14 @@ New settings for 19+V2
    biowiper=n
    outputexecutedtag=n
 ------
+ 0.9.11 - aquadopp.c : Added a warning to the download operation when the
+                       datafile is >100kb long.  A typical file is 14-20kb
+                       for our buoys.  Also added a "get prompt" step between 
+                       the two data query commands in the download routine.
+
+ 0.9.10 - winch.c    : Added 3 second delay after WINCH ON in movePackageUp and 
+                       movePackageDown to allow for slow start up of new winch
+	               control cyclinder
 
  0.9.9 - orcad.c     : Sync the CTD time with the computer time at the end
                        of every cast.

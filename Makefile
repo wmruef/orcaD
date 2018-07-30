@@ -26,7 +26,7 @@
 #    4. Run: make distclean
 #
 # Set the version here
-VERSION = 0.9.9
+VERSION = 0.9.11
 
 # Set the installation directories here
 #

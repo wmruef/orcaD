@@ -696,7 +696,7 @@ int displayAquadoppFAT ( int aquadoppFD )
 int clearAquadoppFAT ( int aquadoppFD ) 
 {
   int    bytesRead = 0;
-  char   fileBuff[128];
+  char   fileBuff[129];
 
   // Normalize the Aquadopp state by getting a command prompt
   if ( getAquadoppPrompt( aquadoppFD ) < 1 )
@@ -755,9 +755,10 @@ int downloadAquadoppFiles ( int aquadoppFD )
   int    FATIndex = 0;
   int    bytesRead = 0;
   int    retVal = 0;
-  int retries = 0;
-  int fileSuffixNum = 0;
-  char   fileBuff[128];
+  int    retries = 0;
+  int    fileSuffixNum = 0;
+  char   fileBuff[129];
+  char   cmdArr[16];
   struct aquadoppFAT buffer[32];
   struct stat statBuff;
   FILE   *fpl;
@@ -794,6 +795,34 @@ int downloadAquadoppFiles ( int aquadoppFD )
                 buffer[ FATIndex ].stopAddress[1], 
                 buffer[ FATIndex ].stopAddress[2], 
                 buffer[ FATIndex ].stopAddress[3] );
+
+      long startAddr = 0;
+      long stopAddr = 0;
+      startAddr = ( (buffer[ FATIndex ].startAddress[0] << 24) | 
+                    (buffer[ FATIndex ].startAddress[1] << 16) |
+                    (buffer[ FATIndex ].startAddress[2] << 8) |
+                    (buffer[ FATIndex ].startAddress[3]) );
+      stopAddr =  ( (buffer[ FATIndex ].stopAddress[0] << 24) |
+                    (buffer[ FATIndex ].stopAddress[1] << 16) |
+                    (buffer[ FATIndex ].stopAddress[2] << 8) |
+                    (buffer[ FATIndex ].stopAddress[3]) );
+
+      if ( ( stopAddr - startAddr ) > 100000 )
+      {
+          LOGPRINT( LVL_WARN, "downloadAquadoppFiles(): Warning - unusually large aquadopp file: filename = %s seq=%x status=%x "
+                " start= %x-%x-%x-%x end= %x-%x-%x-%x size=%ld",
+                buffer[ FATIndex ].filenamePrefix, 
+                buffer[ FATIndex ].filenameSeq,
+                buffer[ FATIndex ].status,
+                buffer[ FATIndex ].startAddress[0],
+                buffer[ FATIndex ].startAddress[1],
+                buffer[ FATIndex ].startAddress[2],
+                buffer[ FATIndex ].startAddress[3],
+                buffer[ FATIndex ].stopAddress[0], 
+                buffer[ FATIndex ].stopAddress[1], 
+                buffer[ FATIndex ].stopAddress[2], 
+                buffer[ FATIndex ].stopAddress[3], ( stopAddr - startAddr ) );
+      }
       
       if ( buffer[ FATIndex ].startAddress[0] != 
               buffer[ FATIndex ].stopAddress[0] ||
@@ -804,104 +833,158 @@ int downloadAquadoppFiles ( int aquadoppFD )
            buffer[ FATIndex ].startAddress[3] != 
               buffer[ FATIndex ].stopAddress[3]  )
       { 
-      // Open a file
-      sprintf( dataLogFile,"%s/%s%04ld.AQD", opts.dataSubDirName,
-               opts.dataFilePrefix, opts.lastCastNum );
+        // Open a file
+        sprintf( dataLogFile,"%s/%s%04ld.AQD", opts.dataSubDirName,
+                 opts.dataFilePrefix, opts.lastCastNum );
 
-      while(    ( retVal = stat(dataLogFile, &statBuff ) ) == 0
-             && retries++ < 32 )
-      {
-        fileSuffixNum++;
-        sprintf( dataLogFile,"%s/%s%04ld_%02d.AQD", opts.dataSubDirName,
-               opts.dataFilePrefix, opts.lastCastNum, fileSuffixNum );
-      }
-      if ( retVal == 0 )
-      {
-        LOGPRINT( LVL_WARN, "downloadAquadoppFiles(): Failed to create "
-                  "a unique filename on filesystem.  Last attempt produced "
-                  "%s and it already exists!", dataLogFile );
-        return( FAILURE );
-      } 
-
-      if((fpl = fopen(dataLogFile,"w")) == NULL)
-      {
-         LOGPRINT( LVL_CRIT, "downloadAquadoppFiles(): Could not open new "
-                  "data file = %s", dataLogFile );
-         return( FAILURE );
-      }
-
-      LOGPRINT( LVL_ALWY, "downloadAquadoppFiles: Saving aquadopp file to "
-                "data file = %s", dataLogFile );
-
-
-      LOGPRINT( LVL_DEBG, "downloadAquadoppFiles: Saving configuration " 
-                          "data.. " );
-
-      // Clear the port
-      term_flush( aquadoppFD );
-
-      // Send the command to download a record file
-      serialPutLine( aquadoppFD, "FC" );
-      // Give it the FAT index
-      serialPutByte( aquadoppFD, 0x00 );
-      serialPutByte( aquadoppFD, 0x00 );
-      serialPutByte( aquadoppFD, 0x00 );
-      serialPutByte( aquadoppFD, 0x00 );
-      serialPutByte( aquadoppFD, 0x00 );
-      serialPutByte( aquadoppFD, 0x00 );
-      serialPutByte( aquadoppFD, 0x00 );
-      serialPutByte( aquadoppFD, FATIndex );
-
-      // Read/write the data
-      // NOTE: Currently this leave the ACK ACK in between the data sets.
-      //       I believe this should be removed soas not to interfere
-      //       with NORTEKS conversion software.
-      while ( ( bytesRead = 
-               serialGetLine( aquadoppFD, fileBuff, 128, 500L, dblAck ) ) > 0 )
-      {
-        // if ( bytesRead > 1 )
-        // Characterize the current block
-        //if ( fileBuff[ bytesRead-1 ] == 0x06 )
-        //{
-        //  bytesRead--;
-        //  prevAcksFound = 1;
-        //}
-        //if ( fileBuff[ bytesRead-1 ] == 0x06 )
-        //{
-        //  bytesRead--;
-        //  prevAcksFound++;
-        //}
-        fwrite( fileBuff, 1, bytesRead, fpl ); 
-      }
-
-      LOGPRINT( LVL_DEBG, "downloadAquadoppFiles: Saving measurement " 
-                          "data.. " );
-
-      // Send the command to download a record file
-      serialPutLine( aquadoppFD, "RD" );
-      // Give it the start memory location
-      serialPutByte( aquadoppFD, buffer[ FATIndex ].startAddress[0] );
-      serialPutByte( aquadoppFD, buffer[ FATIndex ].startAddress[1] );
-      serialPutByte( aquadoppFD, buffer[ FATIndex ].startAddress[2] );
-      serialPutByte( aquadoppFD, buffer[ FATIndex ].startAddress[3] );
-      // Give it the stop memory location - little endian
-      serialPutByte( aquadoppFD, buffer[ FATIndex ].stopAddress[0] );
-      serialPutByte( aquadoppFD, buffer[ FATIndex ].stopAddress[1] );
-      serialPutByte( aquadoppFD, buffer[ FATIndex ].stopAddress[2] );
-      serialPutByte( aquadoppFD, buffer[ FATIndex ].stopAddress[3] );
-    
-      // Read/write the data
-      // NOTE: Currently this leave the ACK ACK at the end of the file
-      //       I believe this should be removed so as not to interfere
-      //       with NORTEKS conversion software.
-      while ( ( bytesRead = 
-               serialGetLine( aquadoppFD, fileBuff, 128, 500L, dblAck ) ) > 0 )
-      {
-        fwrite( fileBuff, 1, bytesRead, fpl ); 
-      }
+        while(    ( retVal = stat(dataLogFile, &statBuff ) ) == 0
+               && retries++ < 32 )
+        {
+          fileSuffixNum++;
+          sprintf( dataLogFile,"%s/%s%04ld_%02d.AQD", opts.dataSubDirName,
+                 opts.dataFilePrefix, opts.lastCastNum, fileSuffixNum );
+        }
+        if ( retVal == 0 )
+        {
+          LOGPRINT( LVL_WARN, "downloadAquadoppFiles(): Failed to create "
+                    "a unique filename on filesystem.  Last attempt produced "
+                    "%s and it already exists!", dataLogFile );
+          return( FAILURE );
+        } 
   
-      // Close the file.
-      fclose( fpl );
+        if((fpl = fopen(dataLogFile,"w")) == NULL)
+        {
+           LOGPRINT( LVL_CRIT, "downloadAquadoppFiles(): Could not open new "
+                    "data file = %s", dataLogFile );
+           return( FAILURE );
+        }
+  
+        LOGPRINT( LVL_ALWY, "downloadAquadoppFiles: Saving aquadopp file to "
+                  "data file = %s", dataLogFile );
+  
+  
+        LOGPRINT( LVL_DEBG, "downloadAquadoppFiles: Saving configuration " 
+                            "data.. " );
+  
+        // Clear the port
+        term_flush( aquadoppFD );
+  
+        // Normalize the Aquadopp state by getting a command prompt
+        if ( getAquadoppPrompt( aquadoppFD ) < 1 )
+        {
+          // All attempts at obtaining a command prompt failed 
+          LOGPRINT( LVL_WARN, "clearAquadoppFAT(): All attempts "
+                    "at obtaining a command prompt failed." );
+          return( FAILURE );
+        }
+
+        cmdArr[0] = 'F';
+        cmdArr[1] = 'C';
+        cmdArr[2] = 0x00;
+        cmdArr[3] = 0x00;
+        cmdArr[4] = 0x00;
+        cmdArr[5] = 0x00;
+        cmdArr[6] = 0x00;
+        cmdArr[7] = 0x00;
+        cmdArr[8] = 0x00;
+        cmdArr[9] = FATIndex;
+        serialPutData( aquadoppFD, cmdArr, 10 );
+    
+        /*
+         * Timming Issues...
+        // Send the command to download a record file
+        serialPutLine( aquadoppFD, "FC" );
+        // Give it the FAT index
+        serialPutByte( aquadoppFD, 0x00 );
+        serialPutByte( aquadoppFD, 0x00 );
+        serialPutByte( aquadoppFD, 0x00 );
+        serialPutByte( aquadoppFD, 0x00 );
+        serialPutByte( aquadoppFD, 0x00 );
+        serialPutByte( aquadoppFD, 0x00 );
+        serialPutByte( aquadoppFD, 0x00 );
+        serialPutByte( aquadoppFD, FATIndex );
+        */
+  
+        // Read/write the data
+        // NOTE: Currently this leave the ACK ACK in between the data sets.
+        //       I believe this should be removed so as not to interfere
+        //       with NORTEKS conversion software.
+        int totalBytesRead = 0;
+        while ( ( bytesRead = 
+                 serialGetLine( aquadoppFD, fileBuff, 128, 500L, dblAck ) ) > 0 )
+        {
+          // if ( bytesRead > 1 )
+          // Characterize the current block
+          //if ( fileBuff[ bytesRead-1 ] == 0x06 )
+          //{
+          //  bytesRead--;
+          //  prevAcksFound = 1;
+          //}
+          //if ( fileBuff[ bytesRead-1 ] == 0x06 )
+          //{
+          //  bytesRead--;
+          //  prevAcksFound++;
+          //}
+          fwrite( fileBuff, 1, bytesRead, fpl ); 
+          totalBytesRead += bytesRead;
+        }
+
+        // Clear the port
+        term_flush( aquadoppFD );
+  
+        // Normalize the Aquadopp state by getting a command prompt
+        if ( getAquadoppPrompt( aquadoppFD ) < 1 )
+        {
+          // All attempts at obtaining a command prompt failed 
+          LOGPRINT( LVL_WARN, "clearAquadoppFAT(): All attempts "
+                    "at obtaining a command prompt failed." );
+          return( FAILURE );
+        }
+
+        LOGPRINT( LVL_DEBG, "downloadAquadoppFiles: Saving measurement " 
+                          "data.. " );
+
+        cmdArr[0] = 'R';
+        cmdArr[1] = 'D';
+        cmdArr[2] = buffer[ FATIndex ].startAddress[0];
+        cmdArr[3] = buffer[ FATIndex ].startAddress[1];
+        cmdArr[4] = buffer[ FATIndex ].startAddress[2];
+        cmdArr[5] = buffer[ FATIndex ].startAddress[3];
+        cmdArr[6] = buffer[ FATIndex ].stopAddress[0];
+        cmdArr[7] = buffer[ FATIndex ].stopAddress[1];
+        cmdArr[8] = buffer[ FATIndex ].stopAddress[2];
+        cmdArr[9] = buffer[ FATIndex ].stopAddress[3];
+        serialPutData( aquadoppFD, cmdArr, 10 );
+ 
+        /*
+         * Timming Issues...
+        // Send the command to download a record file
+        serialPutLine( aquadoppFD, "RD" );
+        // Give it the start memory location
+        serialPutByte( aquadoppFD, buffer[ FATIndex ].startAddress[0] );
+        serialPutByte( aquadoppFD, buffer[ FATIndex ].startAddress[1] );
+        serialPutByte( aquadoppFD, buffer[ FATIndex ].startAddress[2] );
+        serialPutByte( aquadoppFD, buffer[ FATIndex ].startAddress[3] );
+        // Give it the stop memory location - little endian
+        serialPutByte( aquadoppFD, buffer[ FATIndex ].stopAddress[0] );
+        serialPutByte( aquadoppFD, buffer[ FATIndex ].stopAddress[1] );
+        serialPutByte( aquadoppFD, buffer[ FATIndex ].stopAddress[2] );
+        serialPutByte( aquadoppFD, buffer[ FATIndex ].stopAddress[3] );
+        */
+      
+        // Read/write the data
+        // NOTE: Currently this leave the ACK ACK at the end of the file
+        //       I believe this should be removed so as not to interfere
+        //       with NORTEKS conversion software.
+        while ( ( bytesRead = 
+                 serialGetLine( aquadoppFD, fileBuff, 128, 500L, dblAck ) ) > 0 )
+        {
+          fwrite( fileBuff, 1, bytesRead, fpl ); 
+          totalBytesRead += bytesRead;
+        }
+  
+        // Close the file.
+        fclose( fpl );
       }else {
         LOGPRINT( LVL_WARN, "downloadArchive(): WARNING: Aquadop file has "
                             "zero length ( same start/stop position ) "

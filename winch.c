@@ -244,6 +244,9 @@ int movePackageUp ( int hydroFD, int hydroDeviceType, struct sPort *mwPort, int 
     opts.inCritical = 1;
     WINCH_UP;
     WINCH_ON;
+    unsigned int winchDelay = 5;
+
+    sleep(winchDelay);    
 
     if ( ( pressure = getHydroPressure( hydroDeviceType, hydroFD ) ) < 0 )
     {
@@ -523,6 +526,9 @@ int movePackageDown ( int hydroFD, int hydroDeviceType, struct sPort *mwPort, in
     opts.inCritical = 1;
     WINCH_DOWN;
     WINCH_ON;
+    unsigned int winchDelay = 5;
+
+    sleep(winchDelay);
 
     if ( ( pressure = getHydroPressure( hydroDeviceType, hydroFD ) ) < 0 )
     {
